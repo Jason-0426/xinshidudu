@@ -6,12 +6,12 @@
 export const VIP_PRICE = '15.99';
 export const VIP_CURRENCY = 'RM';
 
-// 二维码路径
-export const VIP_QR_IMAGE = '/tng-qr.png';
+// 二维码路径（用 BASE_URL 拼接，本地/线上都能找到）
+export const VIP_QR_IMAGE = `${import.meta.env.BASE_URL}tng-qr.png`;
 
 // 管理员联系方式（收款后用户联系你激活）
 export const VIP_CONTACT_TEXT = '转账后请截图发给我激活';
-export const VIP_CONTACT_WA = 'WhatsApp: +60 17-228-7993';  // 改成你的真实号码
+export const VIP_CONTACT_WA = 'WhatsApp: +60 17-228-7993';
 
 // ============================================================
 // VIP 特权列表（展示用）

@@ -195,10 +195,10 @@ export const ACHIEVEMENTS = [
     category: 'special',
     icon: '💰',
     name: '小富翁',
-    desc: '累计获得 1000 金币',
+    desc: '持有 1000 金币',
     rewardCoins: 200,
     rewardExp: 500,
-    check: (s) => s.totalGoldEarned >= 1000,
+    check: (s) => s.gold >= 1000,   // ← 改了：从 totalGoldEarned → gold（当前持有）
   },
 ];
 
@@ -209,8 +209,12 @@ export function checkAchievements(stats, unlockedMap = {}) {
   const newlyUnlocked = [];
   for (const a of ACHIEVEMENTS) {
     if (unlockedMap[a.id]) continue; // 已解锁的跳过
-    if (a.check(stats)) {
-      newlyUnlocked.push(a);
+    try {
+      if (a.check(stats)) {
+        newlyUnlocked.push(a);
+      }
+    } catch (e) {
+      console.warn(`成就 ${a.id} 检查出错：`, e);
     }
   }
   return newlyUnlocked;

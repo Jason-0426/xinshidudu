@@ -4,6 +4,8 @@ import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES } from './achievements';
 import { isVip } from './vipConfig';
 import './index.css';
 
+// 资源路径工具
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
 // ============================================================
 // 爵位
@@ -161,7 +163,6 @@ export default function ProfilePage({
 
   const stats = useMemo(() => computeStats(profile), [profile]);
   const vip = isVip(profile);
-  console.log('VIP DEBUG:', JSON.stringify(profile.vip), '→ isVip:', vip);
 
   const unlockedMap = profile.achievements || {};
   const unlockedCount = Object.keys(unlockedMap).length;
@@ -371,7 +372,7 @@ export default function ProfilePage({
                       <div className="achievement-rewards-mini">
                         {a.rewardCoins > 0 && (
                           <span className="achievement-mini-reward">
-                            <img src="/coin.png" alt="金币" className="gold-icon" />
+                            <img src={asset('coin.png')} alt="金币" className="gold-icon" />
                             {a.rewardCoins}
                           </span>
                         )}
@@ -403,7 +404,7 @@ export default function ProfilePage({
                 '设置你的名字'
               ) : (
                 <>
-                  修改名字（花 50 <img src="/coin.png" alt="金币" className="gold-icon" />）
+                  修改名字（花 50 <img src={asset('coin.png')} alt="金币" className="gold-icon" />）
                 </>
               )}
             </div>
@@ -426,7 +427,7 @@ export default function ProfilePage({
             </div>
             {profile.name && (
               <div className="name-edit-hint">
-                当前金币：{gold} <img src="/coin.png" alt="金币" className="gold-icon" />
+                当前金币：{gold} <img src={asset('coin.png')} alt="金币" className="gold-icon" />
               </div>
             )}
             <div className="custom-input-actions">
@@ -438,7 +439,7 @@ export default function ProfilePage({
                   '确定'
                 ) : (
                   <>
-                    花 50 <img src="/coin.png" alt="金币" className="gold-icon" /> 改名
+                    花 50 <img src={asset('coin.png')} alt="金币" className="gold-icon" /> 改名
                   </>
                 )}
               </button>

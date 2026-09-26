@@ -31,7 +31,11 @@ export default function AchievementUnlockModal({
         <div className="achievement-unlock-rewards">
           {achievement.rewardCoins > 0 && (
             <div className="achievement-reward-item">
-              <img src="/coin.png" alt="金币" className="gold-icon" />
+              <img
+                src={`${import.meta.env.BASE_URL}coin.png`}
+                alt="金币"
+                className="gold-icon"
+              />
               <span>+{achievement.rewardCoins}</span>
             </div>
           )}

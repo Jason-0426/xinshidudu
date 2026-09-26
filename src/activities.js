@@ -9,21 +9,20 @@
 // 时间到了自动开启，过期自动消失
 // ============================================================
 export const ACTIVITIES = [
-  // ---------- 示例：春节挑战 ----------
+  // ---------- 春节挑战 ----------
   {
-    id: 'spring_festival_2026',
+    id: 'spring_festival_2027',
     name: '春节挑战',
     emoji: '🧧',
     desc: '春节限定，完成任务解锁灯笼塔',
-    startAt: '2026-09-01',
-endAt: '2026-10-31',
+    startAt: '2027-01-25',
+    endAt: '2027-02-15',
 
-    // 活动任务（按顺序解锁展示）
     tasks: [
       {
         id: 'focus_3',
         name: '完成 3 次专注',
-        type: 'sessions',  // sessions | minutes
+        type: 'sessions',
         target: 3,
         reward: 100,
       },
@@ -43,7 +42,6 @@ endAt: '2026-10-31',
       },
     ],
 
-    // 全部完成奖励
     allDoneReward: {
       building: {
         id: 'lantern_tower',
@@ -55,7 +53,7 @@ endAt: '2026-10-31',
     },
   },
 
-  // ---------- 示例：万圣节 ----------
+  // ---------- 万圣节 ----------
   {
     id: 'halloween_2026',
     name: '万圣节挑战',
@@ -75,7 +73,7 @@ endAt: '2026-10-31',
     },
   },
 
-  // ---------- 示例：圣诞节 ----------
+  // ---------- 圣诞节 ----------
   {
     id: 'christmas_2026',
     name: '圣诞挑战',
@@ -94,13 +92,32 @@ endAt: '2026-10-31',
       exp: 1500,
     },
   },
+
+  // ---------- 新年跨年 ----------
+  {
+    id: 'new_year_2027',
+    name: '跨年挑战',
+    emoji: '🎆',
+    desc: '新年限定，完成任务解锁烟花塔',
+    startAt: '2026-12-28',
+    endAt: '2027-01-08',
+    tasks: [
+      { id: 'focus_5',    name: '完成 5 次专注',      type: 'sessions', target: 5,   reward: 200 },
+      { id: 'total_100',  name: '累计专注 100 分钟',  type: 'minutes',  target: 100, reward: 400 },
+      { id: 'total_300',  name: '累计专注 300 分钟',  type: 'minutes',  target: 300, reward: 900 },
+    ],
+    allDoneReward: {
+      building: { id: 'firework_tower', name: '烟花塔', emoji: '🎆' },
+      coins: 1000,
+      exp: 2000,
+    },
+  },
 ];
 
 // ============================================================
 // 工具函数
 // ============================================================
 
-// 今天日期 key（YYYY-MM-DD）
 function getTodayKey() {
   const d = new Date();
   const y = d.getFullYear();
@@ -109,25 +126,21 @@ function getTodayKey() {
   return `${y}-${m}-${day}`;
 }
 
-// 判断活动当前是否在进行中
 export function isActivityLive(activity) {
   const today = getTodayKey();
   return today >= activity.startAt && today <= activity.endAt;
 }
 
-// 判断活动是否已结束
 export function isActivityEnded(activity) {
   const today = getTodayKey();
   return today > activity.endAt;
 }
 
-// 判断活动是否还未开始
 export function isActivityUpcoming(activity) {
   const today = getTodayKey();
   return today < activity.startAt;
 }
 
-// 获取当前进行中的活动列表
 export function getLiveActivities() {
   return ACTIVITIES.filter((a) => isActivityLive(a));
 }
@@ -138,39 +151,22 @@ export function getLiveActivities() {
 export function computeActivityProgress(activity, profile) {
   const records = profile.focusRecords || {};
 
-  // 活动期间内的专注记录
-  const activityRecords = {};
-  let activitySessions = 0;
   let activityMinutes = 0;
 
   Object.entries(records).forEach(([dateKey, minutes]) => {
     if (dateKey >= activity.startAt && dateKey <= activity.endAt) {
-      activityRecords[dateKey] = minutes;
       activityMinutes += minutes;
     }
   });
 
-  // sessions 需要另外统计
-  // 从 profile 里读（用户每完成一次专注会 +1 session）
-  // 但 profile.totalSessions 是累计的，无法按日期过滤
-  // 用另一种方法：从 dailyTasks 或者自定义 session 记录里统计
-  // 第一版：粗略用活动期间天数估算
-  // 更好的做法：在 finishFocus 时记录时间戳
-
-  // 先简化：假设每次专注至少 1 分钟，sessions ≈ 活动期间内的有效天数
-  // 更准确：从 profile 里加一个 sessionsLog 字段（数组，记录每次专注的时间戳）
-  // 这里我们先按 minutes 来算，sessions 类型用另一个方式
-
-  // 用 profile.sessionTimestamps（在 finishFocus 时 push）
   const timestamps = profile.sessionTimestamps || [];
-  const startMs = new Date(activity.startAt).getTime();
+  const startMs = new Date(activity.startAt + 'T00:00:00').getTime();
   const endMs = new Date(activity.endAt + 'T23:59:59').getTime();
 
-  activitySessions = timestamps.filter(
+  const activitySessions = timestamps.filter(
     (t) => t >= startMs && t <= endMs
   ).length;
 
-  // 计算每个任务的进度
   const taskProgress = {};
   activity.tasks.forEach((task) => {
     let current = 0;
@@ -191,7 +187,6 @@ export function computeActivityProgress(activity, profile) {
     };
   });
 
-  // 是否全部完成
   const allTasksDone = activity.tasks.every((t) => taskProgress[t.id].done);
   const doneCount = activity.tasks.filter((t) => taskProgress[t.id].done).length;
 
@@ -211,13 +206,13 @@ export function computeActivityProgress(activity, profile) {
 export function getUserActivityState(activity, profile) {
   const activities = profile.activities || {};
   return activities[activity.id] || {
-    claimedTasks: {},   // { taskId: true }
+    claimedTasks: {},
     allDoneClaimed: false,
   };
 }
 
 // ============================================================
-// 默认的活动状态（用户首次参与时初始化）
+// 默认的活动状态
 // ============================================================
 export function getDefaultActivityState() {
   return {

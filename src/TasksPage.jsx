@@ -6,6 +6,9 @@ import {
 } from './dailyTasks';
 import './index.css';
 
+// 资源路径工具
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
+
 export default function TasksPage({
   open,
   onClose,
@@ -56,7 +59,6 @@ export default function TasksPage({
   };
 
   const completedCount = daily.tasks.filter((t) => t.done).length;
-  const claimedCount = daily.tasks.filter((t) => t.claimed).length;
 
   const pointsPct = Math.min(100, (points / POINTS_LIMIT) * 100);
 
@@ -67,7 +69,7 @@ export default function TasksPage({
         <button className="castle-back" onClick={onClose}>←</button>
         <div className="castle-topbar-title">每日任务</div>
         <div className="glass gold-card">
-          <img src="/coin.png" alt="金币" className="gold-icon" />
+          <img src={asset('coin.png')} alt="金币" className="gold-icon" />
           <span>{gold}</span>
         </div>
       </div>
@@ -77,7 +79,7 @@ export default function TasksPage({
         {/* ============================================================
             本月传说建筑
             ============================================================ */}
-        <div className="tasks-legendary liquid-glass">
+        <div className="tasks-legendary">
           <div className="tasks-legendary-label">本月传说</div>
 
           <div className={`tasks-legendary-img ${legendaryUnlocked ? 'unlocked' : ''}`}>
@@ -135,7 +137,7 @@ export default function TasksPage({
             return (
               <div
                 key={t.id}
-                className={`task-item liquid-glass ${t.done ? 'done' : ''} ${t.claimed ? 'claimed' : ''}`}
+                className={`task-item ${t.done ? 'done' : ''} ${t.claimed ? 'claimed' : ''}`}
               >
                 {/* 左侧图标 */}
                 <div className={`task-icon ${def.difficulty}`}>
@@ -150,7 +152,11 @@ export default function TasksPage({
                   {/* 奖励 */}
                   <div className="task-rewards">
                     <span className="task-reward">
-                      <img src="/coin.png" alt="金币" className="gold-icon" />
+                      <img
+                        src={asset('coin.png')}
+                        alt="金币"
+                        className="gold-icon"
+                      />
                       +{def.coins}
                     </span>
                     <span className="task-reward">⭐ +{def.exp}</span>

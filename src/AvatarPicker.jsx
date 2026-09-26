@@ -3,6 +3,9 @@ import { PRESET_AVATARS, getAvatarDisplay } from './avatarOptions';
 import { VIP_AVATARS } from './vipConfig';
 import './index.css';
 
+// 拼接资源路径（本地 / 线上都正确）
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
+
 export default function AvatarPicker({
   open,
   onClose,
@@ -106,7 +109,7 @@ export default function AvatarPicker({
                     disabled={locked}
                     title={locked ? `${a.name}（VIP 专属）` : a.name}
                   >
-                    <img src={a.img} alt={a.name} />
+                    <img src={asset(a.img)} alt={a.name} />
                     {isVipAvatar && (
                       <span className="vip-avatar-badge">👑</span>
                     )}

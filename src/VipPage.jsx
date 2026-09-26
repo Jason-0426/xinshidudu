@@ -17,6 +17,7 @@ export default function VipPage({
   setProfile,
 }) {
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrError, setQrError] = useState(false);
   const vip = isVip(profile);
 
   // 用户点了"我已付款"
@@ -57,7 +58,7 @@ export default function VipPage({
         </div>
 
         {/* ============================================================
-            如果已激活：显示激活时间
+            已激活信息
             ============================================================ */}
         {vip && profile?.vip?.activatedAt && (
           <div className="vip-activated-info">
@@ -132,22 +133,22 @@ export default function VipPage({
             </div>
 
             <div className="vip-qr-img-wrap">
-              <img
-                src={VIP_QR_IMAGE}
-                alt="TNG 收款码"
-                className="vip-qr-img"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-              <div className="vip-qr-placeholder">
-                <div style={{ fontSize: 40 }}>📱</div>
-                <div>二维码未放入</div>
-                <div style={{ fontSize: 11, opacity: 0.6 }}>
-                  请把 TNG 收款码保存为 public/tng-qr.png
+              {qrError ? (
+                <div className="vip-qr-placeholder" style={{ display: 'flex' }}>
+                  <div style={{ fontSize: 40 }}>📱</div>
+                  <div>二维码未放入</div>
+                  <div style={{ fontSize: 11, opacity: 0.6 }}>
+                    请把 TNG 收款码保存为 public/tng-qr.png
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <img
+                  src={VIP_QR_IMAGE}
+                  alt="TNG 收款码"
+                  className="vip-qr-img"
+                  onError={() => setQrError(true)}
+                />
+              )}
             </div>
 
             <div className="vip-qr-hint">

@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 
+// ---------- 资源路径工具 ----------
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
+
 // ---------- 领地配置 ----------
 const GRID_SIZE = 30;
 const TILE_W = 64;
@@ -13,10 +16,10 @@ const BUILDINGS = {
   house: {
     name: '小木屋',
     imgs: [
-      '/buildings/house-0.png',
-      '/buildings/house-1.png',
-      '/buildings/house-2.png',
-      '/buildings/house-3.png',
+      'buildings/house-0.png',
+      'buildings/house-1.png',
+      'buildings/house-2.png',
+      'buildings/house-3.png',
     ],
     emoji: null,
     w: 1,
@@ -27,6 +30,7 @@ const BUILDINGS = {
   well:   { name: '水井',   imgs: null, emoji: '⛲', w: 1, h: 1, rarity: 'rare' },
   tower:  { name: '魔法塔', imgs: null, emoji: '🏰', w: 1, h: 1, rarity: 'epic' },
 };
+
 // 等距坐标 → 屏幕坐标
 function isoToScreen(x, y) {
   const screenX = (x - y) * (TILE_W / 2);
@@ -84,7 +88,7 @@ const PlacedBuilding = memo(function PlacedBuilding({
       title={damaged ? `${b.name}（受损，${daysLeft} 天后消失）` : `${b.name}（点击管理）`}
     >
       {imgSrc ? (
-        <img src={imgSrc} alt={b.name} className="placed-building-img" />
+        <img src={asset(imgSrc)} alt={b.name} className="placed-building-img" />
       ) : (
         <div className="placed-building-emoji">{b.emoji}</div>
       )}
@@ -105,6 +109,7 @@ const PlacedBuilding = memo(function PlacedBuilding({
     </div>
   );
 });
+
 // ============================================================
 // 城堡页主组件
 // ============================================================
@@ -214,7 +219,6 @@ export default function CastlePage({
 
     if (draggingRef.current && viewportRef.current) {
       const rect = viewportRef.current.getBoundingClientRect();
-      // ★ 除以 scale
       const mx = (e.clientX - rect.left - offset.x) / scale;
       const my = (e.clientY - rect.top - offset.y) / scale;
       const tile = screenToIso(mx, my);
@@ -277,29 +281,32 @@ export default function CastlePage({
     }));
     closeBuildingMenu();
   };
+
   // 修复受损建筑
-const RARITY_COST = { common: 10, rare: 30, epic: 50 };
+  const RARITY_COST = { common: 10, rare: 30, epic: 50 };
 
-const repairBuilding = () => {
-  if (selectedPlaced === null) return;
+  const repairBuilding = () => {
+    if (selectedPlaced === null) return;
 
-  const item = placed[selectedPlaced];
-  const b = BUILDINGS[item.buildingId];
-  if (!b) return;
+    const item = placed[selectedPlaced];
+    const b = BUILDINGS[item.buildingId];
+    if (!b) return;
 
-  const cost = RARITY_COST[b.rarity || 'common'] || 10;
+    const cost = RARITY_COST[b.rarity || 'common'] || 10;
 
-  if (gold < cost) {
-    alert(`金币不足！修复需要 ${cost} <img src="/coin.png" alt="金币" className="gold-icon" />，你只有 ${gold} <img src="/coin.png" alt="金币" className="gold-icon" />`);
-    return;
-  }
+    if (gold < cost) {
+      alert(`金币不足！修复需要 ${cost} 金币，你只有 ${gold} 金币`);
+      return;
+    }
 
-  setGold((g) => g - cost);
-  setPlaced((prev) => prev.map((p, i) =>
-    i === selectedPlaced ? { ...p, damaged: false } : p
-  ));
-  closeBuildingMenu();
-};
+    setGold((g) => g - cost);
+    setPlaced((prev) => prev.map((p, i) =>
+      i === selectedPlaced
+        ? { ...p, damaged: false, damagedAt: null }
+        : p
+    ));
+    closeBuildingMenu();
+  };
 
   // ---------- 渲染 ----------
   return (
@@ -308,7 +315,7 @@ const repairBuilding = () => {
         <button className="castle-back" onClick={onClose}>←</button>
         <div className="castle-topbar-title">我的城堡</div>
         <div className="glass gold-card">
-          <span><img src="/coin.png" alt="金币" className="gold-icon" /></span>
+          <img src={asset('coin.png')} alt="金币" className="gold-icon" />
           <span>{gold}</span>
         </div>
       </div>
@@ -341,20 +348,20 @@ const repairBuilding = () => {
           )}
 
           {[...placed]
-  .sort((a, b) => (a.x + a.y) - (b.x + b.y))
-  .map((p, i) => (
-    <PlacedBuilding
-      key={`b-${i}`}
-      x={p.x}
-      y={p.y}
-      buildingId={p.buildingId}
-      rotation={p.rotation || 0}
-      damaged={p.damaged || false}
-      damageType={p.damageType || 'fire'}
-      damagedAt={p.damagedAt || null}
-      onClick={() => openBuildingMenu(placed.indexOf(p))}
-    />
-  ))}
+            .sort((a, b) => (a.x + a.y) - (b.x + b.y))
+            .map((p, i) => (
+              <PlacedBuilding
+                key={`b-${i}`}
+                x={p.x}
+                y={p.y}
+                buildingId={p.buildingId}
+                rotation={p.rotation || 0}
+                damaged={p.damaged || false}
+                damageType={p.damageType || 'fire'}
+                damagedAt={p.damagedAt || null}
+                onClick={() => openBuildingMenu(placed.indexOf(p))}
+              />
+            ))}
 
           {hoverTile && dragging && dragging !== '__canvas__' && (
             <div
@@ -370,7 +377,7 @@ const repairBuilding = () => {
         </div>
       </div>
 
-            {selectedPlaced !== null && (
+      {selectedPlaced !== null && (
         <>
           <div
             className="building-menu-backdrop"
@@ -383,29 +390,31 @@ const repairBuilding = () => {
 
             {/* 如果受损，显示修复按钮 */}
             {placed[selectedPlaced]?.damaged && (
-  <>
-    {(() => {
-      const item = placed[selectedPlaced];
-      if (item?.damagedAt) {
-        const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
-        const remaining = THREE_DAYS - (Date.now() - item.damagedAt);
-        const days = remaining > 0 ? Math.ceil(remaining / (24 * 60 * 60 * 1000)) : 0;
-        return (
-          <div className="building-menu-warning">
-            ⚠️ 剩 {days} 天未修复将永久消失
-          </div>
-        );
-      }
-      return null;
-    })()}
-    <button
-      className="building-menu-item repair"
-      onClick={repairBuilding}
-    >
-      🔧 花 {RARITY_COST[BUILDINGS[placed[selectedPlaced]?.buildingId]?.rarity || 'common'] || 10} <img src="/coin.png" alt="金币" className="gold-icon" /> 修复
-    </button>
-  </>
-)}
+              <>
+                {(() => {
+                  const item = placed[selectedPlaced];
+                  if (item?.damagedAt) {
+                    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+                    const remaining = THREE_DAYS - (Date.now() - item.damagedAt);
+                    const days = remaining > 0 ? Math.ceil(remaining / (24 * 60 * 60 * 1000)) : 0;
+                    return (
+                      <div className="building-menu-warning">
+                        ⚠️ 剩 {days} 天未修复将永久消失
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                <button
+                  className="building-menu-item repair"
+                  onClick={repairBuilding}
+                >
+                  🔧 花 {RARITY_COST[BUILDINGS[placed[selectedPlaced]?.buildingId]?.rarity || 'common'] || 10}
+                  <img src={asset('coin.png')} alt="金币" className="gold-icon" />
+                  修复
+                </button>
+              </>
+            )}
 
             <button
               className="building-menu-item"
@@ -428,6 +437,7 @@ const repairBuilding = () => {
           </div>
         </>
       )}
+
       <div className="castle-inventory">
         <div className="inventory-title">🏠 建筑仓库（拖拽到领地放置）</div>
         <div className="inventory-list">
@@ -444,7 +454,7 @@ const repairBuilding = () => {
                 onMouseUp={handleMouseUp}
               >
                 <div className="inventory-thumb">
-                  {b.imgs ? <img src={b.imgs[0]} alt={b.name} /> : <span>{b.emoji}</span>}
+                  {b.imgs ? <img src={asset(b.imgs[0])} alt={b.name} /> : <span>{b.emoji}</span>}
                 </div>
                 <div className="inventory-name">{b.name}</div>
                 <div className="inventory-count">×{count}</div>

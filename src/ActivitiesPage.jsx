@@ -18,8 +18,6 @@ export default function ActivitiesPage({
   gold,
   setGold,
 }) {
-  const userActivities = profile.activities || {};
-
   // 分类活动
   const liveActivities = ACTIVITIES.filter((a) => isActivityLive(a));
   const upcomingActivities = ACTIVITIES.filter((a) => isActivityUpcoming(a));
@@ -46,7 +44,7 @@ export default function ActivitiesPage({
       return {
         ...p,
         activities,
-        exp: (p.exp || 0) + 50, // 每个任务额外 50 exp
+        exp: (p.exp || 0) + 50,
       };
     });
 
@@ -84,7 +82,11 @@ export default function ActivitiesPage({
         <button className="castle-back" onClick={onClose}>←</button>
         <div className="castle-topbar-title">活动</div>
         <div className="glass gold-card">
-          <img src="/coin.png" alt="金币" className="gold-icon" />
+          <img
+            src={`${import.meta.env.BASE_URL}coin.png`}
+            alt="金币"
+            className="gold-icon"
+          />
           <span>{gold}</span>
         </div>
       </div>
@@ -95,9 +97,7 @@ export default function ActivitiesPage({
             ============================================================ */}
         {liveActivities.length > 0 && (
           <>
-            <div className="activities-section-title">
-              🔥 进行中
-            </div>
+            <div className="activities-section-title">🔥 进行中</div>
             {liveActivities.map((activity) => (
               <ActivityCard
                 key={activity.id}
@@ -116,9 +116,7 @@ export default function ActivitiesPage({
             ============================================================ */}
         {upcomingActivities.length > 0 && (
           <>
-            <div className="activities-section-title">
-              🕐 即将开始
-            </div>
+            <div className="activities-section-title">🕐 即将开始</div>
             {upcomingActivities.map((activity) => (
               <ActivityCard
                 key={activity.id}
@@ -137,9 +135,7 @@ export default function ActivitiesPage({
             ============================================================ */}
         {endedActivities.length > 0 && (
           <>
-            <div className="activities-section-title">
-              ✅ 已结束
-            </div>
+            <div className="activities-section-title">✅ 已结束</div>
             {endedActivities.map((activity) => (
               <ActivityCard
                 key={activity.id}
@@ -199,15 +195,9 @@ function ActivityCard({
             {activity.startAt} ~ {activity.endAt}
           </div>
         </div>
-        {isLive && (
-          <div className="activity-live-badge">进行中</div>
-        )}
-        {isUpcoming && (
-          <div className="activity-upcoming-badge">即将开始</div>
-        )}
-        {isEnded && (
-          <div className="activity-ended-badge">已结束</div>
-        )}
+        {isLive && <div className="activity-live-badge">进行中</div>}
+        {isUpcoming && <div className="activity-upcoming-badge">即将开始</div>}
+        {isEnded && <div className="activity-ended-badge">已结束</div>}
       </div>
 
       {/* 描述 */}
@@ -260,7 +250,11 @@ function ActivityCard({
                   </div>
                 )}
                 <div className="activity-task-reward">
-                  <img src="/coin.png" alt="金币" className="gold-icon" />
+                  <img
+                    src={`${import.meta.env.BASE_URL}coin.png`}
+                    alt="金币"
+                    className="gold-icon"
+                  />
                   +{task.reward}
                 </div>
               </div>
@@ -293,7 +287,11 @@ function ActivityCard({
             <span>{activity.allDoneReward.building.name}</span>
           </div>
           <div className="activity-all-done-item">
-            <img src="/coin.png" alt="金币" className="gold-icon" />
+            <img
+              src={`${import.meta.env.BASE_URL}coin.png`}
+              alt="金币"
+              className="gold-icon"
+            />
             <span>+{activity.allDoneReward.coins}</span>
           </div>
           <div className="activity-all-done-item">

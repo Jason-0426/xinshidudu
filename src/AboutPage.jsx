@@ -120,7 +120,11 @@ export default function AboutPage({ open, onClose }) {
       <div className="about-content">
         {/* Logo + 名字 */}
         <div className="about-hero">
-          <img src="/logo.png" alt="信誓读读" className="about-logo-img" />
+          <img
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="信誓读读"
+            className="about-logo-img"
+          />
           <div className="about-name">信誓读读</div>
           <div className="about-version">版本 {APP_VERSION}</div>
           <div className="about-slogan">「专注建造你的城堡」</div>

@@ -177,21 +177,24 @@ export function getCurrentLegendary() {
 export function pickRandomTasks(count = 3) {
   const pool = [...TASK_POOL];
   const picked = [];
-  // 保证至少 1 个简单 + 1 个中等
-  const easy = pool.filter((t) => t.difficulty === 'easy');
-  const medium = pool.filter((t) => t.difficulty === 'medium');
-  const hard = pool.filter((t) => t.difficulty === 'hard');
 
   const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   if (count >= 3) {
-    picked.push(pickOne(easy));
-    picked.push(pickOne(medium));
-    picked.push(pickOne(hard));
-    // 剩余的随机补
+    // 保证至少 1 个简单 + 1 个中等 + 1 个困难
+    const easy = pool.filter((t) => t.difficulty === 'easy');
+    const medium = pool.filter((t) => t.difficulty === 'medium');
+    const hard = pool.filter((t) => t.difficulty === 'hard');
+
+    if (easy.length > 0) picked.push(pickOne(easy));
+    if (medium.length > 0) picked.push(pickOne(medium));
+    if (hard.length > 0) picked.push(pickOne(hard));
+
+    // 剩余的随机补（从 pool 里排除已选的）
     for (let i = 3; i < count; i++) {
-      const remaining = pool.filter((t) => !picked.includes(t));
-      if (remaining.length > 0) picked.push(pickOne(remaining));
+      const remaining = pool.filter((t) => !picked.some((p) => p.id === t.id));
+      if (remaining.length === 0) break;
+      picked.push(pickOne(remaining));
     }
   } else {
     // 简单随机
@@ -235,5 +238,10 @@ export function getTaskDef(id) {
 export function checkTaskDone(taskId, dailyData) {
   const def = getTaskDef(taskId);
   if (!def) return false;
-  return def.check(dailyData);
+  try {
+    return def.check(dailyData);
+  } catch (e) {
+    console.warn(`任务 ${taskId} 检查出错：`, e);
+    return false;
+  }
 }

@@ -96,12 +96,16 @@ export default function LoginPage({ onLogin }) {
       handleSubmit();
     }
   };
-    return (
+
+  return (
     <div className="login-page">
       <div className="login-card">
         {/* Logo */}
-        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="信誓读读" className="login-logo-img" />
-        <div className="login-slogan">专注建造你的城堡</div>
+        <img
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt="信誓读读"
+          className="login-logo-img"
+        />
 
         {/* 模式切换 */}
         <div className="login-tabs">
@@ -173,11 +177,7 @@ export default function LoginPage({ onLogin }) {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading
-              ? '处理中...'
-              : mode === 'login'
-                ? '登录'
-                : '注册'}
+            {loading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
           </button>
         </div>
 
@@ -200,9 +200,7 @@ export default function LoginPage({ onLogin }) {
           )}
         </div>
 
-        <div className="login-hint">
-          注册后请到邮箱点击验证链接
-        </div>
+        <div className="login-hint">注册后请到邮箱点击验证链接</div>
       </div>
     </div>
   );

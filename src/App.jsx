@@ -26,7 +26,7 @@ import { getLiveActivities } from './activities';
 
 // ---------- 建筑数据 ----------
 const BUILDINGS = [
-  { id: 'house', name: '小木屋', rarity: 'common', img: '/buildings/house-0.png', emoji: null },
+  { id: 'house', name: '小木屋', rarity: 'common', img: 'buildings/house-0.png', emoji: null },
   { id: 'tree',  name: '松树',   rarity: 'common', img: null, emoji: '🌲' },
   { id: 'well',  name: '水井',   rarity: 'rare',   img: null, emoji: '⛲' },
   { id: 'tower', name: '魔法塔', rarity: 'epic',   img: null, emoji: '🏰' },
@@ -41,12 +41,16 @@ const WEATHER_MAP = {
   snow:  { icon: '❄️', name: '寒冬大雪' },
 };
 
+// 音频文件路径（去掉前导 /，使用 BASE_URL 拼接）
 const SOUNDS = [
-  { id: 'rain',     name: '雨声', emoji: '🌧️', file: '/sounds/rain.mp3' },
-  { id: 'campfire', name: '篝火', emoji: '🔥', file: '/sounds/campfire.mp3' },
-  { id: 'wind',     name: '风声', emoji: '💨', file: '/sounds/wind.mp3' },
-  { id: 'ocean',    name: '海浪', emoji: '🌊', file: '/sounds/ocean.mp3' },
+  { id: 'rain',     name: '雨声', emoji: '🌧️', file: 'sounds/rain.mp3' },
+  { id: 'campfire', name: '篝火', emoji: '🔥', file: 'sounds/campfire.mp3' },
+  { id: 'wind',     name: '风声', emoji: '💨', file: 'sounds/wind.mp3' },
+  { id: 'ocean',    name: '海浪', emoji: '🌊', file: 'sounds/ocean.mp3' },
 ];
+
+// 拼接资源路径的工具函数
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
 // ============================================================
 // 天气粒子层
@@ -227,7 +231,7 @@ const FocusView = memo(function FocusView({
           <div className="focus-building-showcase">
             {selectedBuilding.img ? (
               <img
-                src={selectedBuilding.img}
+                src={asset(selectedBuilding.img)}
                 alt={selectedBuilding.name}
                 className="focus-building-showcase-img"
               />
@@ -290,7 +294,6 @@ const FocusView = memo(function FocusView({
     </div>
   );
 });
-
 // ============================================================
 // 主 App
 // ============================================================
@@ -299,6 +302,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
   const syncTimerRef = useRef(null);
+  const profileLoadedRef = useRef(false);
 
   const [isDev, setIsDev] = useState(false);
   const [devPanelOpen, setDevPanelOpen] = useState(false);
@@ -391,7 +395,7 @@ export default function App() {
   useEffect(() => {
     if (audioRef.current) {
       const wasPlaying = !audioRef.current.paused;
-      audioRef.current.src = sound.file;
+      audioRef.current.src = asset(sound.file);
       audioRef.current.load();
       if (wasPlaying && audioOn) {
         audioRef.current.play().catch(() => {});
@@ -401,7 +405,7 @@ export default function App() {
 
   useEffect(() => {
     if (!audioRef.current) {
-      audioRef.current = new Audio(sound.file);
+      audioRef.current = new Audio(asset(sound.file));
       audioRef.current.loop = true;
       audioRef.current.volume = 0.5;
     }
@@ -440,13 +444,14 @@ export default function App() {
   // ---------- 自动同步到 Supabase ----------
   useEffect(() => {
     if (!user || !dataLoaded) return;
+    if (!profileLoadedRef.current) return;
 
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(async () => {
-  const { error } = await supabase
-    .from('user_data')
-    .update({ gold, inventory, placed, unlocked })
-    .eq('user_id', user.id);
+      const { error } = await supabase
+        .from('user_data')
+        .update({ gold, inventory, placed, unlocked, profile })
+        .eq('user_id', user.id);
 
       if (error) console.warn('同步失败：', error);
     }, 800);
@@ -559,6 +564,7 @@ export default function App() {
       await supabase.from('user_data').insert({ user_id: userId });
     }
 
+    profileLoadedRef.current = true;
     setDataLoaded(true);
     setAuthLoading(false);
   }
@@ -570,7 +576,28 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    // 先关闭所有 UI（同步执行，立刻生效）
+    setDrawerOpen(false);
+    setBuildingPickerOpen(false);
+    setProfileOpen(false);
+    setAvatarPickerOpen(false);
+    setResultOpen(false);
+    setRewardOpen(false);
+    setCastleOpen(false);
+    setShopOpen(false);
+    setSettingsOpen(false);
+    setAboutOpen(false);
+    setTasksOpen(false);
+    setVipOpen(false);
+    setActivitiesOpen(false);
+    setCustomModal(null);
+    setHomeSoundMenuOpen(false);
+    setAchievementQueue([]);
+    setActiveMenu(null);
+
+    // 然后再执行退出
     await supabase.auth.signOut();
+    profileLoadedRef.current = false;
     setUser(null);
     setDataLoaded(false);
     setIsDev(false);
@@ -597,13 +624,13 @@ export default function App() {
       dailyTasks: null,
       points: 0,
       pointsMonth: '',
-            unlockedLegendary: [],
+      unlockedLegendary: [],
       vip: { ...DEFAULT_VIP },
       activities: {},
       sessionTimestamps: [],
     });
   };
-  
+
   // ---------- 计算成就检测用的统计数据 ----------
   const computeStatsForAchievements = (extra = {}) => {
     const records = profile.focusRecords || {};
@@ -754,11 +781,9 @@ export default function App() {
     const now = Date.now();
 
     setProfile((prev) => {
-      // ---------- 1. 更新 focusRecords ----------
       const records = { ...(prev.focusRecords || {}) };
       records[todayKey] = (records[todayKey] || 0) + minutes;
 
-      // ---------- 2. 更新每日任务追踪 ----------
       let daily = prev.dailyTasks;
       if (!daily || daily.date !== getTodayKey()) {
         daily = generateTodayTasks();
@@ -785,7 +810,6 @@ export default function App() {
         streak2: daily.streak2 || streak2,
       };
 
-      // ---------- 3. 检查每个任务是否达成 ----------
       const updatedTasks = daily.tasks.map((t) => {
         if (t.done) return t;
         const isDone = checkTaskDone(t.id, daily);
@@ -794,16 +818,13 @@ export default function App() {
 
       daily = { ...daily, tasks: updatedTasks };
 
-      // ---------- 4. VIP 经验加成 ----------
       const vipActive = isVip(prev);
       const baseExp = minutes * 2;
       const expGain = vipActive
         ? Math.round(baseExp * (1 + VIP_BONUS.exp))
         : baseExp;
 
-            // ---------- 5. 记录专注时间戳（活动用）----------
       const timestamps = [...(prev.sessionTimestamps || []), now];
-      // 只保留最近 1 年的记录，防止数组太大
       const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
       const trimmedTimestamps = timestamps.filter((t) => t >= oneYearAgo);
 
@@ -817,7 +838,6 @@ export default function App() {
       };
     });
 
-    // ---------- 5. VIP 金币加成 ----------
     const vipActive = isVip(profile);
     const baseCoins = minutes + 10;
     const coins = vipActive
@@ -862,29 +882,23 @@ export default function App() {
     return daily.tasks.some((t) => t.done && !t.claimed);
   };
 
-    // 是否有可领取的活动奖励
+  // 是否有可领取的活动奖励（改进：只有真正达到目标的才算）
   const hasClaimableActivities = () => {
     const live = getLiveActivities();
     if (live.length === 0) return false;
 
     const userActivities = profile.activities || {};
     for (const activity of live) {
-      const state = userActivities[activity.id];
-      if (!state) return true; // 有活动但没参与过 → 有可领（虽然没进度）
-
+      const state = userActivities[activity.id] || {};
       const claimedTasks = state.claimedTasks || {};
-      // 检查每个任务是否已领
-      for (const task of activity.tasks) {
-        if (!claimedTasks[task.id]) {
-          // 这个任务没领 → 需要知道进度是否达标
-          // 简化：只要有未领的任务就算有可领
-          return true;
-        }
-      }
-      if (!state.allDoneClaimed) {
-        // 全部奖励没领
-        return true;
-      }
+
+      // 只有"已领取全部奖励"了，就不显示红点
+      // 但如果有任务未领，或者全部奖励没领，就显示
+      const hasUnclaimedTask = activity.tasks.some(
+        (t) => !claimedTasks[t.id]
+      );
+      if (hasUnclaimedTask) return true;
+      if (!state.allDoneClaimed) return true;
     }
     return false;
   };
@@ -903,17 +917,17 @@ export default function App() {
 
   // ---------- 共用：城堡舞台 ----------
   const CastleStage = ({ onClick }) => (
-    <div className="castle-stage" onClick={onClick}>
-      <div className="castle-glass-disc"></div>
-      <div className="castle-pedestal"></div>
-      {selectedBuilding.img ? (
-        <img src={selectedBuilding.img} alt={selectedBuilding.name} className="castle-img" />
-      ) : (
-        <div className="castle-emoji">{selectedBuilding.emoji}</div>
-      )}
-      <div className="castle-hint">点击更换建筑</div>
-    </div>
-  );
+  <div className="castle-stage" onClick={onClick}>
+    <div className="castle-glass-disc"></div>
+    <div className="castle-pedestal"></div>
+    {selectedBuilding.img ? (
+      <img src={selectedBuilding.img} alt={selectedBuilding.name} className="castle-img" />
+    ) : (
+      <div className="castle-emoji">{selectedBuilding.emoji}</div>
+    )}
+    <div className="castle-hint">点击更换建筑</div>
+  </div>
+);
 
   // ---------- 共用：控制面板 ----------
   const ControlPanel = () => (
@@ -1029,7 +1043,7 @@ export default function App() {
       </div>
     );
   }
-  return (
+    return (
     <>
       {/* ============================================================
           电脑版主页
@@ -1049,15 +1063,15 @@ export default function App() {
                 ],
               },
               {
-    label: '游戏',
-    items: [
-      { key: 'tasks',      icon: '📋', text: '每日任务', badge: true },
-      { key: 'activities', icon: '🎉', text: '活动',     badge: true },
-      { key: 'home',       icon: '🏰', text: '我的城堡' },
-      { key: 'shop',       icon: '🛒', text: '建筑商店' },
-      { key: 'vip',        icon: '💎', text: 'VIP 特权' },
-    ],
-  },
+                label: '游戏',
+                items: [
+                  { key: 'tasks',      icon: '📋', text: '每日任务', badge: true },
+                  { key: 'activities', icon: '🎉', text: '活动',     badge: true },
+                  { key: 'home',       icon: '🏰', text: '我的城堡' },
+                  { key: 'shop',       icon: '🛒', text: '建筑商店' },
+                  { key: 'vip',        icon: '💎', text: 'VIP 特权' },
+                ],
+              },
               {
                 label: '系统',
                 items: [
@@ -1092,7 +1106,11 @@ export default function App() {
 
           <div className="desktop-topbar">
             <div className="desktop-topbar-left">
-              <img src="/logo.png" alt="信誓读读" className="topbar-logo-img" />
+              <img
+                src={asset('logo.png')}
+                alt="信誓读读"
+                className="topbar-logo-img"
+              />
               <div className="desktop-brand">信誓读读</div>
               <span className="level-tag">Lv.4</span>
               <span className="streak-badge">🔥12</span>
@@ -1100,7 +1118,7 @@ export default function App() {
 
             <div className="desktop-topbar-right">
               <div className="glass gold-card">
-                <img src="/coin.png" alt="金币" className="gold-icon" />
+                <img src={asset('coin.png')} alt="金币" className="gold-icon" />
                 <span>{gold}</span>
               </div>
               {isDev && (
@@ -1140,7 +1158,7 @@ export default function App() {
           <div className="top-bar">
             <button className="glass-btn menu-btn" onClick={() => setDrawerOpen(true)}>☰</button>
             <div className="glass player-card">
-              <img src="/logo.png" alt="信誓读读" className="player-avatar-img" />
+              <img src={asset('logo.png')} alt="信誓读读" className="player-avatar-img" />
               <div>
                 <div className="player-name">
                   信誓读读
@@ -1151,7 +1169,7 @@ export default function App() {
               </div>
             </div>
             <div className="glass gold-card">
-              <img src="/coin.png" alt="金币" className="gold-icon" />
+              <img src={asset('coin.png')} alt="金币" className="gold-icon" />
               <span>{gold}</span>
             </div>
             {isDev && (
@@ -1248,7 +1266,7 @@ export default function App() {
                 disabled={!isUnlocked}
               >
                 <div className={`picker-thumb rarity-${b.rarity}`}>
-                  {b.img ? <img src={b.img} alt={b.name} /> : <span>{b.emoji}</span>}
+                  {b.img ? <img src={asset(b.img)} alt={b.name} /> : <span>{b.emoji}</span>}
                   {!isUnlocked && <div className="lock-badge">🔒</div>}
                 </div>
                 <div className="picker-name">{b.name}</div>
@@ -1268,14 +1286,19 @@ export default function App() {
 
       <div className={`reward-modal ${rewardOpen ? 'active' : ''}`}>
         <div className="reward-icon">
-          {selectedBuilding.emoji || (<img src={selectedBuilding.img} alt={selectedBuilding.name} />)}
+          {selectedBuilding.emoji || (
+            <img src={asset(selectedBuilding.img)} alt={selectedBuilding.name} />
+          )}
         </div>
         <div className="reward-title">🎁 获得建筑</div>
         <div className="reward-name">{selectedBuilding.name} ×1</div>
         <div className={`reward-rarity rarity-tag-${selectedBuilding.rarity}`}>{RARITY_LABEL[selectedBuilding.rarity]}</div>
         <div className="reward-actions">
           <button className="reward-btn keep" onClick={keepBuilding}>📦 保留 ×1</button>
-          <button className="reward-btn convert" onClick={convertToCoins}>💰 转 {RARITY_COIN[selectedBuilding.rarity] || 10} <img src="/coin.png" alt="金币" className="gold-icon" /></button>
+          <button className="reward-btn convert" onClick={convertToCoins}>
+            💰 转 {RARITY_COIN[selectedBuilding.rarity] || 10}
+            <img src={asset('coin.png')} alt="金币" className="gold-icon" />
+          </button>
         </div>
       </div>
 
@@ -1284,7 +1307,8 @@ export default function App() {
         <div className="result-title">专注完成！</div>
         <div className="result-detail">用时 <strong>{resultData.minutes}</strong> 分钟</div>
         <div className="result-coins">
-          +{resultData.coins} <img src="/coin.png" alt="金币" className="gold-icon" />
+          +{resultData.coins}
+          <img src={asset('coin.png')} alt="金币" className="gold-icon" />
         </div>
         <button className="result-ok" onClick={() => setResultOpen(false)}>确定</button>
       </div>
@@ -1400,7 +1424,7 @@ export default function App() {
         setGold={setGold}
       />
 
-            {/* ============================================================
+      {/* ============================================================
           活动页
           ============================================================ */}
       <ActivitiesPage
@@ -1496,6 +1520,8 @@ export default function App() {
               pointsMonth: '',
               unlockedLegendary: [],
               vip: { ...DEFAULT_VIP },
+              activities: {},
+              sessionTimestamps: [],
             });
           }}
         />

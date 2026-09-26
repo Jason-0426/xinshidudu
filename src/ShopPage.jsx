@@ -2,6 +2,9 @@ import React from 'react';
 import { VIP_BUILDINGS } from './vipConfig';
 import './index.css';
 
+// 资源路径工具
+const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
+
 // ---------- 商店里的建筑定义（含价格）----------
 const SHOP_BUILDINGS = [
   {
@@ -10,10 +13,10 @@ const SHOP_BUILDINGS = [
     rarity: 'common',
     price: 0,
     imgs: [
-      '/buildings/house-0.png',
-      '/buildings/house-1.png',
-      '/buildings/house-2.png',
-      '/buildings/house-3.png',
+      'buildings/house-0.png',
+      'buildings/house-1.png',
+      'buildings/house-2.png',
+      'buildings/house-3.png',
     ],
     emoji: null,
   },
@@ -75,7 +78,7 @@ export default function ShopPage({
         <button className="castle-back" onClick={onClose}>←</button>
         <div className="castle-topbar-title">建筑商店</div>
         <div className="glass gold-card">
-          <img src="/coin.png" alt="金币" className="gold-icon" />
+          <img src={asset('coin.png')} alt="金币" className="gold-icon" />
           <span>{gold}</span>
         </div>
       </div>
@@ -102,7 +105,7 @@ export default function ShopPage({
                 {/* 缩略图 */}
                 <div className={`shop-thumb rarity-${b.rarity}`}>
                   {b.imgs ? (
-                    <img src={b.imgs[0]} alt={b.name} />
+                    <img src={asset(b.imgs[0])} alt={b.name} />
                   ) : (
                     <span>{b.emoji}</span>
                   )}
@@ -134,11 +137,11 @@ export default function ShopPage({
                   >
                     {canAfford ? (
                       <>
-                        解锁 {b.price} <img src="/coin.png" alt="金币" className="gold-icon" />
+                        解锁 {b.price} <img src={asset('coin.png')} alt="金币" className="gold-icon" />
                       </>
                     ) : (
                       <>
-                        需 {b.price} <img src="/coin.png" alt="金币" className="gold-icon" />
+                        需 {b.price} <img src={asset('coin.png')} alt="金币" className="gold-icon" />
                       </>
                     )}
                   </button>
