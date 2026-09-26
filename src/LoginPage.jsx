@@ -100,7 +100,7 @@ export default function LoginPage({ onLogin }) {
     <div className="login-page">
       <div className="login-card">
         {/* Logo */}
-        <img src="/logo.png" alt="信誓读读" className="login-logo-img" />
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="信誓读读" className="login-logo-img" />
         <div className="login-slogan">专注建造你的城堡</div>
 
         {/* 模式切换 */}
