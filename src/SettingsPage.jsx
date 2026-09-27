@@ -40,6 +40,9 @@ export default function SettingsPage({
   onClearData,
   onLogout,
   userEmail,
+  theme = 'midnight',
+  setTheme,
+  themes = [],
 }) {
   const [settings, setSettings] = useState(() => loadSettings());
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -238,11 +241,30 @@ export default function SettingsPage({
         </div>
 
         {/* ============ 外观 ============ */}
-        <div className="settings-group">
-          <div className="settings-group-title">🎨 外观</div>
+<div className="settings-group">
+  <div className="settings-group-title">🎨 外观</div>
 
-          <div className="settings-row inline">
-            <span className="settings-label-simple">动画效果</span>
+  {/* 主题选择器 */}
+  <div className="settings-row">
+    <div className="settings-label-simple">主题</div>
+    <div className="theme-picker">
+      {themes.map((t) => (
+        <button
+          key={t.id}
+          className={`theme-option ${theme === t.id ? 'active' : ''}`}
+          onClick={() => setTheme && setTheme(t.id)}
+        >
+          <span className="theme-option-emoji">{t.emoji}</span>
+          <span className="theme-option-name">{t.name}</span>
+          <span className="theme-option-desc">{t.desc}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* 动画效果 */}
+  <div className="settings-row inline">
+    <span className="settings-label-simple">动画效果</span>
             <button
               className={`toggle ${settings.animations ? 'on' : ''}`}
               onClick={() => update('animations', !settings.animations)}

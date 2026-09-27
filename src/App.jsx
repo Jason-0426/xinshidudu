@@ -53,6 +53,17 @@ const SOUNDS = [
   { id: 'ocean',    name: '海浪', emoji: '🌊', file: 'sounds/ocean.mp3' },
 ];
 
+// ============================================================
+// 主题配置
+// ============================================================
+const THEMES = [
+  { id: 'midnight',  name: '午夜森林', emoji: '🌌', desc: '默认主题' },
+  { id: 'ocean',     name: '深海秘境', emoji: '🌊', desc: '冷静专注' },
+  { id: 'sakura',    name: '樱花夜',   emoji: '🌸', desc: '温柔浪漫' },
+  { id: 'sunset',    name: '落日余晖', emoji: '🌅', desc: '温暖怀旧' },
+  { id: 'dawn',      name: '晨曦白',   emoji: '☀️', desc: '清爽白天' },
+];
+
 // ---------- 资源路径 ----------
 const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
@@ -101,6 +112,59 @@ function computeStreak(profile) {
   }
   return streak;
 }
+
+// ============================================================
+// 主题粒子层
+// ============================================================
+const ThemeParticles = memo(function ThemeParticles({ theme }) {
+  const particles = useMemo(() => {
+    const configs = {
+      midnight: { count: 20, type: 'firefly' },
+      ocean:    { count: 25, type: 'bubble' },
+      sakura:   { count: 18, type: 'petal' },
+      sunset:   { count: 22, type: 'ember' },
+      dawn:     { count: 15, type: 'dust' },
+    };
+    const cfg = configs[theme] || configs.midnight;
+    return Array.from({ length: cfg.count }, (_, i) => ({
+      id: i,
+      type: cfg.type,
+      left: Math.random() * 100,
+      delay: Math.random() * 8,
+      duration:
+        cfg.type === 'bubble' ? 8 + Math.random() * 6 :
+        cfg.type === 'ember'  ? 4 + Math.random() * 3 :
+        cfg.type === 'petal'  ? 10 + Math.random() * 6 :
+        12 + Math.random() * 8,
+      size:
+        cfg.type === 'firefly' ? 3 + Math.random() * 3 :
+        cfg.type === 'bubble'  ? 6 + Math.random() * 8 :
+        cfg.type === 'petal'   ? 8 + Math.random() * 6 :
+        cfg.type === 'ember'   ? 3 + Math.random() * 3 :
+        2 + Math.random() * 2,
+    }));
+  }, [theme]);
+
+  if (!theme) return null;
+
+  return (
+    <div className={`theme-particles theme-particles-${theme}`} aria-hidden="true">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className={`particle particle-${p.type}`}
+          style={{
+            left: `${p.left}%`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+          }}
+        />
+      ))}
+    </div>
+  );
+});
 
 // ============================================================
 // 天气粒子层
@@ -478,6 +542,16 @@ export default function App() {
   const [devPanelOpen, setDevPanelOpen] = useState(false);
 
   const [view, setView] = useState('home');
+  const [theme, setTheme] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_theme');
+    if (saved) return saved;
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'dawn';
+    }
+  } catch {}
+  return 'midnight';
+});
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [weather, setWeather] = useState(() => {
   try {
@@ -697,6 +771,22 @@ useEffect(() => {
     console.error('恢复专注失败：', e);
   }
 }, [dataLoaded]);
+
+// 应用主题
+useEffect(() => {
+  const themeMap = {
+    midnight: 'dark',
+    ocean: 'ocean',
+    sakura: 'sakura',
+    sunset: 'sunset',
+    dawn: 'light',
+  };
+  document.documentElement.setAttribute('data-theme', themeMap[theme] || 'dark');
+  document.documentElement.setAttribute('data-theme-name', theme);
+  try {
+    localStorage.setItem('xinshidudu_theme', theme);
+  } catch {}
+}, [theme]);
 
   // ---------- 自动同步到 Supabase ----------
   useEffect(() => {
@@ -1324,6 +1414,7 @@ useEffect(() => {
 
   return (
     <>
+    <ThemeParticles theme={theme} />
       {/* ============================================================
           电脑版主页
           ============================================================ */}
@@ -1415,6 +1506,17 @@ useEffect(() => {
             </div>
 
             <div className="desktop-topbar-right">
+              <button
+  className="theme-toggle-btn"
+  onClick={() => {
+    const idx = THEMES.findIndex((t) => t.id === theme);
+    const next = THEMES[(idx + 1) % THEMES.length];
+    setTheme(next.id);
+  }}
+  title={`主题：${THEMES.find((t) => t.id === theme)?.name}`}
+>
+  {THEMES.find((t) => t.id === theme)?.emoji}
+</button>
               <div className="glass gold-card">
                 <img src={asset('coin.png')} alt="金币" className="gold-icon" />
                 <span>{gold}</span>
@@ -1466,6 +1568,7 @@ useEffect(() => {
                 <div className="player-sub">{computeTitle(computeLevel(profile.exp))}领地</div>
               </div>
             </div>
+            
             <div className="glass gold-card">
               <img src={asset('coin.png')} alt="金币" className="gold-icon" />
               <span>{gold}</span>
@@ -1716,17 +1819,20 @@ useEffect(() => {
           偏好设置页
           ============================================================ */}
       <SettingsPage
-        open={settingsOpen}
-        onClose={closeSettings}
-        onLogout={handleLogout}
-        userEmail={user?.email}
-        onClearData={() => {
-          setGold(328);
-          setInventory(INITIAL_INVENTORY);
-          setUnlocked(['house']);
-          setPlaced([]);
-        }}
-      />
+  open={settingsOpen}
+  onClose={closeSettings}
+  onLogout={handleLogout}
+  userEmail={user?.email}
+  theme={theme}
+  setTheme={setTheme}
+  themes={THEMES}
+  onClearData={() => {
+  setGold(328);
+  setInventory(INITIAL_INVENTORY);
+  setUnlocked(['house']);
+  setPlaced([]);
+}}
+/>
 
       {/* ============================================================
           关于页
