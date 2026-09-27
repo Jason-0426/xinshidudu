@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './index.css';
+import { BUILDINGS } from './buildings';
 
 const EXP_PER_LEVEL = 500;
 
@@ -62,9 +63,10 @@ export default function DevPanel({
 
   // ---------- 建筑 ----------
   const unlockAll = () => {
-    setUnlocked(['house', 'tree', 'well', 'tower']);
-    alert('已解锁所有建筑');
-  };
+  const allIds = BUILDINGS.map((b) => b.id);
+  setUnlocked(allIds);
+  alert(`已解锁 ${allIds.length} 个建筑`);
+};
 
   const clearPlaced = () => {
     if (!window.confirm('确定清空领地上的所有建筑吗？（会退还到仓库）')) return;
@@ -78,9 +80,13 @@ export default function DevPanel({
   };
 
   const addAllToInventory = () => {
-    setInventory({ house: 99, tree: 99, well: 99, tower: 99 });
-    alert('仓库已填满（每种 99 个）');
-  };
+  const all = {};
+  BUILDINGS.forEach((b) => {
+    all[b.id] = 99;
+  });
+  setInventory(all);
+  alert(`仓库已填满（${BUILDINGS.length} 种建筑 × 99）`);
+};
 
   // ---------- VIP ----------
   const toggleVip = () => {

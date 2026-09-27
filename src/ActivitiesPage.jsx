@@ -185,7 +185,7 @@ function ActivityCard({
   const isEnded = status === 'ended';
 
   return (
-    <div className={`activity-card activity-${status}`}>
+    <div className={`activity-card activity-${status} activity-theme-${activity.theme || 'default'}`}>
       {/* 头部 */}
       <div className="activity-card-header">
         <div className="activity-emoji">{activity.emoji}</div>

@@ -58,12 +58,10 @@ const PRIVACY_TEXT = `
 `;
 
 const CONTACT_INFO = [
-  { icon: '📧', label: '邮箱', value: 'hello@xinshidudu.app' },
-  { icon: '💬', label: 'Discord', value: 'xinshidudu' },
-  { icon: '🐦', label: 'Twitter / X', value: '@xinshidudu' },
-  { icon: '🐙', label: 'GitHub', value: 'github.com/xinshidudu' },
+  { icon: '📧', label: '邮箱', value: 'hejianxin0426@gmail.com' },
+  { icon: '🐙', label: 'GitHub', value: 'github.com/Jason-0426' },
+  { icon: '📷', label: 'Instagram', value: 'xinshidudu.studyapp' },
 ];
-
 const ROADMAP = [
   { icon: '🔐', title: '账号登录', desc: 'Google / Email 登录，多设备同步', status: '开发中' },
   { icon: '🎉', title: '派对功能', desc: '和朋友一起专注、共建领地', status: '开发中' },

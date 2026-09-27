@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef, memo, useMemo } from 'react';
 import './index.css';
+import {
+  BUILDINGS,
+  RARITY_LABEL,
+  RARITY_COIN,
+  DEFAULT_BUILDING,
+} from './buildings';
 import CastlePage from './CastlePage';
 import ShopPage from './ShopPage';
 import SettingsPage from './SettingsPage';
@@ -9,7 +15,7 @@ import LoginPage from './LoginPage';
 import DevPanel from './DevPanel';
 import { supabase } from './supabase';
 import AvatarPicker from './AvatarPicker';
-import { DEFAULT_AVATAR } from './avatarOptions';
+import { DEFAULT_AVATAR, getAvatarDisplay } from './avatarOptions';
 import AchievementUnlockModal from './AchievementUnlockModal';
 import { checkAchievements } from './achievements';
 import TasksPage from './TasksPage';
@@ -24,24 +30,22 @@ import { DEFAULT_VIP, isVip, VIP_BONUS } from './vipConfig';
 import ActivitiesPage from './ActivitiesPage';
 import { getLiveActivities } from './activities';
 
-// ---------- 建筑数据 ----------
-const BUILDINGS = [
-  { id: 'house', name: '小木屋', rarity: 'common', img: 'buildings/house-0.png', emoji: null },
-  { id: 'tree',  name: '松树',   rarity: 'common', img: null, emoji: '🌲' },
-  { id: 'well',  name: '水井',   rarity: 'rare',   img: null, emoji: '⛲' },
-  { id: 'tower', name: '魔法塔', rarity: 'epic',   img: null, emoji: '🏰' },
-];
+// ---------- 仓库 ----------
+const EMPTY_INVENTORY = BUILDINGS.reduce((acc, b) => {
+  acc[b.id] = 0;
+  return acc;
+}, {});
 
-const RARITY_LABEL = { common: '普通', rare: '稀有', epic: '史诗' };
-const RARITY_COIN  = { common: 10, rare: 30, epic: 50 };
+const INITIAL_INVENTORY = { ...EMPTY_INVENTORY, house: 1 };
 
+// ---------- 天气 ----------
 const WEATHER_MAP = {
   clear: { icon: '☀️', name: '晴空万里' },
   rain:  { icon: '🌧️', name: '暴风雨' },
   snow:  { icon: '❄️', name: '寒冬大雪' },
 };
 
-// 音频文件路径（去掉前导 /，使用 BASE_URL 拼接）
+// ---------- 白噪音 ----------
 const SOUNDS = [
   { id: 'rain',     name: '雨声', emoji: '🌧️', file: 'sounds/rain.mp3' },
   { id: 'campfire', name: '篝火', emoji: '🔥', file: 'sounds/campfire.mp3' },
@@ -49,8 +53,54 @@ const SOUNDS = [
   { id: 'ocean',    name: '海浪', emoji: '🌊', file: 'sounds/ocean.mp3' },
 ];
 
-// 拼接资源路径的工具函数
+// ---------- 资源路径 ----------
 const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
+
+// ---------- 辅助函数 ----------
+function computeLevel(exp) {
+  return Math.min(10, Math.floor((exp || 0) / 500) + 1);
+}
+
+function computeTitle(level) {
+  const titles = [
+    '侍从 I', '侍从 II', '侍从 III', '骑士', '男爵',
+    '子爵', '伯爵', '侯爵', '公爵', '国王',
+  ];
+  return titles[level - 1] || '侍从 I';
+}
+
+function computeDays(joinedAt) {
+  if (!joinedAt) return 1;
+  const joined = new Date(joinedAt);
+  joined.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((today - joined) / 86400000) + 1;
+}
+
+function computeStreak(profile) {
+  const records = profile.focusRecords || {};
+  const dateKey = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const cursor = new Date(today);
+  while (true) {
+    const k = dateKey(cursor);
+    if (records[k] && records[k] > 0) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
 
 // ============================================================
 // 天气粒子层
@@ -229,17 +279,11 @@ const FocusView = memo(function FocusView({
       <div className="focus-castle-area">
         <div className="focus-focus-display">
           <div className="focus-building-showcase">
-            {selectedBuilding.img ? (
-              <img
-                src={asset(selectedBuilding.img)}
-                alt={selectedBuilding.name}
-                className="focus-building-showcase-img"
-              />
-            ) : (
-              <div className="focus-building-showcase-emoji">
-                {selectedBuilding.emoji}
-              </div>
-            )}
+            <img
+              src={selectedBuilding.imgs[0]}
+              alt={selectedBuilding.name}
+              className="focus-building-showcase-img"
+            />
             <div className="focus-building-showcase-name">
               {selectedBuilding.name}
             </div>
@@ -271,7 +315,7 @@ const FocusView = memo(function FocusView({
           </div>
           <div className="timer-digits">{displayTime}</div>
           <div className="timer-reward">
-            完成后获得：{selectedBuilding.emoji || '🏠'} {selectedBuilding.name}
+            完成后获得：{selectedBuilding.name}
           </div>
         </div>
 
@@ -337,7 +381,7 @@ export default function App() {
   const audioRef = useRef(null);
 
   const [gold, setGold] = useState(328);
-  const [selectedBuilding, setSelectedBuilding] = useState(BUILDINGS[0]);
+  const [selectedBuilding, setSelectedBuilding] = useState(DEFAULT_BUILDING);
   const [buildingPickerOpen, setBuildingPickerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
@@ -388,7 +432,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   const [unlocked, setUnlocked]   = useState(['house']);
-  const [inventory, setInventory] = useState({ house: 1, tree: 0, well: 0, tower: 0 });
+  const [inventory, setInventory] = useState(INITIAL_INVENTORY);
   const [placed, setPlaced]       = useState([]);
 
   // ---------- 音频管理 ----------
@@ -552,7 +596,7 @@ export default function App() {
 
     if (data) {
       if (typeof data.gold === 'number') setGold(data.gold);
-      if (data.inventory) setInventory(data.inventory);
+      if (data.inventory) setInventory({ ...EMPTY_INVENTORY, ...data.inventory });
       if (data.placed) setPlaced(data.placed);
       if (data.unlocked) setUnlocked(data.unlocked);
       if (data.profile && Object.keys(data.profile).length > 0) {
@@ -576,7 +620,6 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    // 先关闭所有 UI（同步执行，立刻生效）
     setDrawerOpen(false);
     setBuildingPickerOpen(false);
     setProfileOpen(false);
@@ -595,7 +638,6 @@ export default function App() {
     setAchievementQueue([]);
     setActiveMenu(null);
 
-    // 然后再执行退出
     await supabase.auth.signOut();
     profileLoadedRef.current = false;
     setUser(null);
@@ -603,7 +645,7 @@ export default function App() {
     setIsDev(false);
     setDevPanelOpen(false);
     setGold(328);
-    setInventory({ house: 1, tree: 0, well: 0, tower: 0 });
+    setInventory(INITIAL_INVENTORY);
     setUnlocked(['house']);
     setPlaced([]);
     setProfile({
@@ -839,7 +881,17 @@ export default function App() {
     });
 
     const vipActive = isVip(profile);
-    const baseCoins = minutes + 10;
+
+    // 基础：分钟数 + 10
+    let baseCoins = minutes + 10;
+
+    // 阶梯奖励
+    if (minutes >= 60) {
+      baseCoins += 50;   // 60 分钟以上额外 +50
+    } else if (minutes >= 30) {
+      baseCoins += 20;   // 30-59 分钟额外 +20
+    }
+
     const coins = vipActive
       ? Math.round(baseCoins * (1 + VIP_BONUS.coins))
       : baseCoins;
@@ -882,23 +934,25 @@ export default function App() {
     return daily.tasks.some((t) => t.done && !t.claimed);
   };
 
-  // 是否有可领取的活动奖励（改进：只有真正达到目标的才算）
+  // 是否有可领取的活动奖励
   const hasClaimableActivities = () => {
     const live = getLiveActivities();
     if (live.length === 0) return false;
 
     const userActivities = profile.activities || {};
     for (const activity of live) {
-      const state = userActivities[activity.id] || {};
-      const claimedTasks = state.claimedTasks || {};
+      const state = userActivities[activity.id];
+      if (!state) return true;
 
-      // 只有"已领取全部奖励"了，就不显示红点
-      // 但如果有任务未领，或者全部奖励没领，就显示
-      const hasUnclaimedTask = activity.tasks.some(
-        (t) => !claimedTasks[t.id]
-      );
-      if (hasUnclaimedTask) return true;
-      if (!state.allDoneClaimed) return true;
+      const claimedTasks = state.claimedTasks || {};
+      for (const task of activity.tasks) {
+        if (!claimedTasks[task.id]) {
+          return true;
+        }
+      }
+      if (!state.allDoneClaimed) {
+        return true;
+      }
     }
     return false;
   };
@@ -917,17 +971,15 @@ export default function App() {
 
   // ---------- 共用：城堡舞台 ----------
   const CastleStage = ({ onClick }) => (
-  <div className="castle-stage" onClick={onClick}>
-    <div className="castle-glass-disc"></div>
-    <div className="castle-pedestal"></div>
-    {selectedBuilding.img ? (
-      <img src={selectedBuilding.img} alt={selectedBuilding.name} className="castle-img" />
-    ) : (
-      <div className="castle-emoji">{selectedBuilding.emoji}</div>
-    )}
-    <div className="castle-hint">点击更换建筑</div>
-  </div>
-);
+    <div className="castle-stage" onClick={onClick}>
+      <img
+        src={selectedBuilding.imgs[0]}
+        alt={selectedBuilding.name}
+        className="castle-img"
+      />
+      <div className="castle-hint">点击更换建筑</div>
+    </div>
+  );
 
   // ---------- 共用：控制面板 ----------
   const ControlPanel = () => (
@@ -1043,7 +1095,8 @@ export default function App() {
       </div>
     );
   }
-    return (
+
+  return (
     <>
       {/* ============================================================
           电脑版主页
@@ -1054,6 +1107,25 @@ export default function App() {
             <button className="sidebar-toggle" onClick={() => setSidebarCollapsed((v) => !v)}>
               {sidebarCollapsed ? '▶' : '◀'}
             </button>
+
+            {!sidebarCollapsed && (
+              <div className="sidebar-profile" onClick={openProfile}>
+                <img
+                  src={getAvatarDisplay(profile.avatar).src}
+                  alt="头像"
+                  className="sidebar-profile-avatar"
+                />
+                <div className="sidebar-profile-info">
+                  <div className="sidebar-profile-name">
+                    {profile.name || '未设置名字'}
+                    {isVip(profile) && <span style={{ marginLeft: 4 }}>👑</span>}
+                  </div>
+                  <div className="sidebar-profile-sub">
+                    Lv.{computeLevel(profile.exp)} · {computeTitle(computeLevel(profile.exp))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {[
               {
@@ -1112,8 +1184,8 @@ export default function App() {
                 className="topbar-logo-img"
               />
               <div className="desktop-brand">信誓读读</div>
-              <span className="level-tag">Lv.4</span>
-              <span className="streak-badge">🔥12</span>
+              <span className="level-tag">Lv.{computeLevel(profile.exp)}</span>
+              <span className="streak-badge">🔥{computeStreak(profile)}</span>
             </div>
 
             <div className="desktop-topbar-right">
@@ -1162,10 +1234,10 @@ export default function App() {
               <div>
                 <div className="player-name">
                   信誓读读
-                  <span className="level-tag">Lv.4</span>
-                  <span className="streak-badge">🔥12</span>
+                  <span className="level-tag">Lv.{computeLevel(profile.exp)}</span>
+                  <span className="streak-badge">🔥{computeStreak(profile)}</span>
                 </div>
-                <div className="player-sub">皇家骑士领地</div>
+                <div className="player-sub">{computeTitle(computeLevel(profile.exp))}领地</div>
               </div>
             </div>
             <div className="glass gold-card">
@@ -1185,14 +1257,34 @@ export default function App() {
 
           <div className={`drawer-backdrop ${drawerOpen ? 'active' : ''}`} onClick={() => setDrawerOpen(false)} />
           <aside className={`drawer ${drawerOpen ? 'open' : ''}`}>
+            {/* 用户信息卡 */}
             <div className="drawer-profile clickable" onClick={openProfile}>
-              <div className="drawer-avatar">🛡</div>
+              <div className="drawer-avatar">
+                <img
+                  src={getAvatarDisplay(profile.avatar).src}
+                  alt="头像"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
               <div>
-                <div className="drawer-name">亚瑟公爵</div>
-                <div className="drawer-role">级别：最高领主</div>
-                <div className="drawer-days">👑 已守护领地 42 天</div>
+                <div className="drawer-name">
+                  {profile.name || '未设置名字'}
+                  {isVip(profile) && <span style={{ marginLeft: 6 }}>👑</span>}
+                </div>
+                <div className="drawer-role">
+                  Lv.{computeLevel(profile.exp)} · {computeTitle(computeLevel(profile.exp))}
+                </div>
+                <div className="drawer-days">
+                  🗓 已守护领地 {computeDays(profile.joinedAt)} 天
+                </div>
               </div>
             </div>
+
             <nav className="drawer-nav">
               <button className="drawer-nav-item" onClick={openProfile}>👤 用户资料</button>
               <button
@@ -1266,7 +1358,7 @@ export default function App() {
                 disabled={!isUnlocked}
               >
                 <div className={`picker-thumb rarity-${b.rarity}`}>
-                  {b.img ? <img src={asset(b.img)} alt={b.name} /> : <span>{b.emoji}</span>}
+                  <img src={b.imgs[0]} alt={b.name} />
                   {!isUnlocked && <div className="lock-badge">🔒</div>}
                 </div>
                 <div className="picker-name">{b.name}</div>
@@ -1286,9 +1378,7 @@ export default function App() {
 
       <div className={`reward-modal ${rewardOpen ? 'active' : ''}`}>
         <div className="reward-icon">
-          {selectedBuilding.emoji || (
-            <img src={asset(selectedBuilding.img)} alt={selectedBuilding.name} />
-          )}
+          <img src={selectedBuilding.imgs[0]} alt={selectedBuilding.name} />
         </div>
         <div className="reward-title">🎁 获得建筑</div>
         <div className="reward-name">{selectedBuilding.name} ×1</div>
@@ -1401,7 +1491,7 @@ export default function App() {
         userEmail={user?.email}
         onClearData={() => {
           setGold(328);
-          setInventory({ house: 1, tree: 0, well: 0, tower: 0 });
+          setInventory(INITIAL_INVENTORY);
           setUnlocked(['house']);
           setPlaced([]);
         }}
@@ -1468,7 +1558,7 @@ export default function App() {
             if (user) {
               await supabase.from('user_data').update({
                 gold: 328,
-                inventory: { house: 1, tree: 0, well: 0, tower: 0 },
+                inventory: INITIAL_INVENTORY,
                 placed: [],
                 unlocked: ['house'],
                 profile: {
@@ -1497,7 +1587,7 @@ export default function App() {
               }).eq('user_id', user.id);
             }
             setGold(328);
-            setInventory({ house: 1, tree: 0, well: 0, tower: 0 });
+            setInventory(INITIAL_INVENTORY);
             setUnlocked(['house']);
             setPlaced([]);
             setProfile({

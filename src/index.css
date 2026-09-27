@@ -7198,5 +7198,541 @@ body:has(.login-page) {
   content: none !important;
 }
 /* ============================================================
+   强制修复：弹窗显示
+   ============================================================ */
+.picker-modal.active,
+.result-modal.active,
+.reward-modal.active,
+.avatar-picker-modal.active,
+.achievement-unlock-modal.active,
+.dev-panel-backdrop.active .dev-panel {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  z-index: 200 !important;
+}
+/* ============================================================
+   稀有度特效
+   ============================================================ */
+
+/* ---------- 普通：灰色边框，无特效 ---------- */
+.shop-card.rarity-common {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.picker-item.rarity-common {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ---------- 稀有：蓝色边框 + 微光 ---------- */
+.shop-card.rarity-rare {
+  border-color: rgba(83, 157, 245, 0.4);
+  box-shadow:
+    0 0 20px rgba(83, 157, 245, 0.15),
+    inset 0 1px 0 var(--glass-highlight-soft);
+}
+
+.shop-card.rarity-rare:hover {
+  border-color: rgba(83, 157, 245, 0.8);
+  box-shadow:
+    0 0 40px rgba(83, 157, 245, 0.3),
+    inset 0 1px 0 var(--glass-highlight);
+}
+
+.picker-item.rarity-rare {
+  border-color: rgba(83, 157, 245, 0.4);
+}
+
+/* ---------- 史诗：紫色边框 + 脉冲 ---------- */
+.shop-card.rarity-epic {
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.2),
+    inset 0 1px 0 var(--glass-highlight-soft);
+  animation: epicPulse 3s ease-in-out infinite;
+}
+
+@keyframes epicPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 30px rgba(168, 85, 247, 0.2),
+      inset 0 1px 0 var(--glass-highlight-soft);
+  }
+  50% {
+    box-shadow:
+      0 0 50px rgba(168, 85, 247, 0.4),
+      inset 0 1px 0 var(--glass-highlight-soft);
+  }
+}
+
+.picker-item.rarity-epic {
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
+/* ---------- 传说：金色边框 + 强光 + 皇冠 ---------- */
+.shop-card.rarity-legendary {
+  position: relative;
+  border-color: rgba(251, 191, 36, 0.6);
+  box-shadow:
+    0 0 40px rgba(251, 191, 36, 0.3),
+    inset 0 0 20px rgba(251, 191, 36, 0.1),
+    inset 0 1px 0 var(--glass-highlight-soft);
+  animation: legendaryGlow 2s ease-in-out infinite;
+}
+
+@keyframes legendaryGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(251, 191, 36, 0.3),
+      inset 0 0 20px rgba(251, 191, 36, 0.1),
+      inset 0 1px 0 var(--glass-highlight-soft);
+  }
+  50% {
+    box-shadow:
+      0 0 60px rgba(251, 191, 36, 0.5),
+      inset 0 0 30px rgba(251, 191, 36, 0.2),
+      inset 0 1px 0 var(--glass-highlight-soft);
+  }
+}
+
+.shop-card.rarity-legendary::before {
+  content: '👑';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(251, 191, 36, 0.8));
+  z-index: 10;
+  animation: crownFloat 2s ease-in-out infinite;
+}
+
+@keyframes crownFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+.picker-item.rarity-legendary {
+  border-color: rgba(251, 191, 36, 0.6);
+}
+/* ============================================================
+   稀有度文字特效
+   ============================================================ */
+
+/* 基础：通用样式（都保留） */
+.shop-rarity,
+.picker-rarity {
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  transition: all 0.3s ease;
+}
+
+/* ---------- 普通：灰色（无特效）---------- */
+.shop-rarity.rarity-common,
+.picker-rarity.rarity-common {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- 稀有：蓝色发光 ---------- */
+.shop-rarity.rarity-rare,
+.picker-rarity.rarity-rare {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.25);
+  text-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+/* ---------- 史诗：紫色脉冲 ---------- */
+.shop-rarity.rarity-epic,
+.picker-rarity.rarity-epic {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  box-shadow: 0 0 16px rgba(192, 132, 252, 0.3);
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+  animation: rarityEpicPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes rarityEpicPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.3);
+    text-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(192, 132, 252, 0.5);
+    text-shadow: 0 0 16px rgba(192, 132, 252, 0.9);
+  }
+}
+
+/* ---------- 传说：金色强光 + 渐变 ---------- */
+.shop-rarity.rarity-legendary,
+.picker-rarity.rarity-legendary {
+  color: #fbbf24;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(245, 158, 11, 0.12));
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  box-shadow:
+    0 0 20px rgba(251, 191, 36, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+  animation: rarityLegendaryShine 2s ease-in-out infinite;
+}
+
+@keyframes rarityLegendaryShine {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(251, 191, 36, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(251, 191, 36, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: 0 0 18px rgba(251, 191, 36, 1);
+  }
+}
+/* ============================================================
+   修复：仓库横向滚动
+   ============================================================ */
+.castle-inventory {
+  position: relative;
+  z-index: 20;
+}
+
+.inventory-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 20px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+}
+
+.inventory-list:active {
+  cursor: grabbing;
+}
+
+.inventory-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.inventory-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inventory-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.inventory-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* 让物品不被压缩 */
+.inventory-item {
+  flex-shrink: 0 !important;
+}
+/* ============================================================
+   活动主题色
+   ============================================================ */
+
+/* 🎃 万圣节：橙色 */
+.activity-theme-halloween.activity-card {
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.activity-theme-halloween .activity-live-badge {
+  background: rgba(251, 146, 60, 0.15);
+  border-color: rgba(251, 146, 60, 0.4);
+  color: #fb923c;
+}
+
+.activity-theme-halloween .activity-progress-fill {
+  background: linear-gradient(90deg, #fb923c, #f97316);
+}
+
+/* 🎄 圣诞：红绿 */
+.activity-theme-christmas.activity-card {
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.activity-theme-christmas .activity-live-badge {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #f87171;
+}
+
+.activity-theme-christmas .activity-progress-fill {
+  background: linear-gradient(90deg, #dc2626, #16a34a);
+}
+
+/* 🧧 新春：红色 */
+.activity-theme-spring.activity-card {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.activity-theme-spring .activity-live-badge {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.activity-theme-spring .activity-progress-fill {
+  background: linear-gradient(90deg, #ef4444, #fbbf24);
+}
+
+/* 🎆 跨年：紫金 */
+.activity-theme-new_year.activity-card {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.activity-theme-new_year .activity-live-badge {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.activity-theme-new_year .activity-progress-fill {
+  background: linear-gradient(90deg, #a855f7, #fbbf24);
+}
+/* ============================================================
+   活动主题色 · 开服庆典
+   ============================================================ */
+.activity-theme-launch.activity-card {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(251, 191, 36, 0.2),
+    inset 0 1px 0 rgba(251, 191, 36, 0.4);
+}
+
+.activity-theme-launch .activity-live-badge {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15));
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fbbf24;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3);
+}
+
+.activity-theme-launch .activity-progress-fill {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
+}
+
+.activity-theme-launch .activity-emoji {
+  filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.6));
+  animation: launchEmojiFloat 3s ease-in-out infinite;
+}
+
+@keyframes launchEmojiFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.05); }
+}
+/* ============================================================
+   修复：手机版滚动
+   ============================================================ */
+
+/* App 容器允许纵向滚动 */
+.app-viewport {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 抽屉菜单允许滚动 */
+.drawer {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 主页控制区域允许滚动 */
+.home-controls {
+  overflow: visible;
+}
+
+/* 主页中央区域 */
+.main-area {
+  min-height: 200px;
+}
+/* ============================================================
+   手机版：允许滚动
+   ============================================================ */
+
+/* 手机版布局 */
+@media (max-width: 899px) {
+  /* body 允许滚动 */
+  body {
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* App 容器 */
+  .app-viewport {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* 主页主区 */
+  .main-area {
+    flex: none !important;
+    min-height: 250px;
+    padding: 20px 16px;
+  }
+
+  /* 主页控制区 */
+  .home-controls {
+    padding: 12px 16px 32px;
+  }
+
+  /* 抽屉 */
+  .drawer {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding-bottom: 40px;
+  }
+
+  /* 所有弹窗内可滚动 */
+  .picker-modal,
+  .avatar-picker-modal,
+  .achievement-unlock-modal,
+  .tasks-content,
+  .profile-content,
+  .shop-content,
+  .settings-content,
+  .about-content,
+  .vip-content,
+  .activities-content {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+}
+/* ============================================================
+   修复：手机版抽屉
+   ============================================================ */
+@media (max-width: 899px) {
+
+  /* 抽屉容器：允许滚动 */
+  .drawer {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    padding: 60px 16px 40px !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    overscroll-behavior: contain !important;
+  }
+
+  /* 顶部头像卡：不被压缩 */
+  .drawer-profile {
+    flex-shrink: 0 !important;
+  }
+
+  /* 菜单列表：不被压缩 */
+  .drawer-nav {
+    flex-shrink: 0 !important;
+  }
+
+  /* 底部署名：不被压缩 */
+  .drawer-footer {
+    flex-shrink: 0 !important;
+    margin-top: 24px !important;
+  }
+
+  /* 每个菜单项间距 */
+  .drawer-nav-item {
+    flex-shrink: 0 !important;
+    min-height: 48px;
+  }
+}
+/* ============================================================
+   修复：抽屉顶部状态栏留白
+   ============================================================ */
+@media (max-width: 899px) {
+  .drawer {
+    padding-top: max(60px, env(safe-area-inset-top, 60px)) !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-bottom: 40px !important;
+  }
+}
+@media (max-width: 899px) {
+  .drawer {
+    padding-top: 90px !important;
+  }
+}
+/* ============================================================
+   电脑版侧栏用户信息卡
+   ============================================================ */
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-hairline);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-snappy);
+}
+
+.sidebar-profile:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+}
+
+.sidebar-profile-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sidebar-profile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+/* ============================================================
    END
    ============================================================ */

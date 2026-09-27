@@ -2,39 +2,84 @@
 // 活动系统
 // ============================================================
 
-// ============================================================
-// 活动定义（硬编码）
-// 加新活动：复制一个模板改就行
-// 时间格式：'YYYY-MM-DD'
-// 时间到了自动开启，过期自动消失
-// ============================================================
 export const ACTIVITIES = [
-  // ---------- 春节挑战 ----------
+
+    // ============================================================
+  // 🎉 开服庆典（限时活动）
+  // ============================================================
   {
-    id: 'spring_festival_2027',
-    name: '春节挑战',
-    emoji: '🧧',
-    desc: '春节限定，完成任务解锁灯笼塔',
-    startAt: '2027-01-25',
-    endAt: '2027-02-15',
+    id: 'launch_celebration_2026',
+    name: '开服庆典',
+    emoji: '🎉',
+    desc: '欢迎来到信誓读读！完成任务领取开服限定奖励',
+    startAt: '2026-09-27',
+    endAt: '2026-10-11',
+    theme: 'launch',
 
     tasks: [
       {
-        id: 'focus_3',
+        id: 'launch_1',
+        name: '完成 1 次专注',
+        type: 'sessions',
+        target: 1,
+        reward: 100,
+      },
+      {
+        id: 'launch_2',
+        name: '累计专注 60 分钟',
+        type: 'minutes',
+        target: 60,
+        reward: 300,
+      },
+      {
+        id: 'launch_3',
+        name: '累计专注 180 分钟',
+        type: 'minutes',
+        target: 180,
+        reward: 800,
+      },
+    ],
+
+    allDoneReward: {
+      building: {
+        id: 'launch-tower',
+        name: '开服纪念塔',
+        emoji: '🏆',
+      },
+      coins: 1500,
+      exp: 3000,
+    },
+  },
+  
+  // ============================================================
+  // 🎃 万圣节惊魂
+  // ============================================================
+  {
+    id: 'halloween_2026',
+    name: '万圣节惊魂',
+    emoji: '🎃',
+    desc: '万圣夜降临，完成任务解锁南瓜屋',
+    startAt: '2026-10-20',
+    endAt: '2026-11-05',
+    theme: 'halloween',
+
+    tasks: [
+      {
+        id: 'halloween_1',
         name: '完成 3 次专注',
         type: 'sessions',
         target: 3,
         reward: 100,
       },
       {
-        id: 'total_60',
+        id: 'halloween_2',
         name: '累计专注 60 分钟',
         type: 'minutes',
         target: 60,
         reward: 200,
       },
       {
-        id: 'total_180',
+        id: 'halloween_3',
         name: '累计专注 180 分钟',
         type: 'minutes',
         target: 180,
@@ -44,72 +89,153 @@ export const ACTIVITIES = [
 
     allDoneReward: {
       building: {
-        id: 'lantern_tower',
-        name: '灯笼塔',
-        emoji: '🏮',
+        id: 'pumpkin-house',
+        name: '南瓜屋',
+        emoji: '🎃',
       },
       coins: 500,
       exp: 1000,
     },
   },
 
-  // ---------- 万圣节 ----------
-  {
-    id: 'halloween_2026',
-    name: '万圣节挑战',
-    emoji: '🎃',
-    desc: '万圣节限定，完成任务解锁南瓜屋',
-    startAt: '2026-10-20',
-    endAt: '2026-11-05',
-    tasks: [
-      { id: 'focus_5',   name: '完成 5 次专注',      type: 'sessions', target: 5,   reward: 150 },
-      { id: 'total_90',  name: '累计专注 90 分钟',   type: 'minutes',  target: 90,  reward: 300 },
-      { id: 'total_240', name: '累计专注 240 分钟',  type: 'minutes',  target: 240, reward: 600 },
-    ],
-    allDoneReward: {
-      building: { id: 'pumpkin_house', name: '南瓜屋', emoji: '🎃' },
-      coins: 600,
-      exp: 1200,
-    },
-  },
-
-  // ---------- 圣诞节 ----------
+  // ============================================================
+  // 🎄 圣诞奇缘
+  // ============================================================
   {
     id: 'christmas_2026',
-    name: '圣诞挑战',
+    name: '圣诞奇缘',
     emoji: '🎄',
-    desc: '圣诞限定，完成任务解锁圣诞树',
+    desc: '雪花飘落，完成任务解锁圣诞树',
     startAt: '2026-12-15',
     endAt: '2027-01-05',
+    theme: 'christmas',
+
     tasks: [
-      { id: 'focus_7',   name: '完成 7 次专注',      type: 'sessions', target: 7,   reward: 200 },
-      { id: 'total_120', name: '累计专注 120 分钟',  type: 'minutes',  target: 120, reward: 400 },
-      { id: 'total_300', name: '累计专注 300 分钟',  type: 'minutes',  target: 300, reward: 800 },
+      {
+        id: 'christmas_1',
+        name: '完成 5 次专注',
+        type: 'sessions',
+        target: 5,
+        reward: 150,
+      },
+      {
+        id: 'christmas_2',
+        name: '累计专注 100 分钟',
+        type: 'minutes',
+        target: 100,
+        reward: 300,
+      },
+      {
+        id: 'christmas_3',
+        name: '累计专注 300 分钟',
+        type: 'minutes',
+        target: 300,
+        reward: 800,
+      },
     ],
+
     allDoneReward: {
-      building: { id: 'christmas_tree', name: '圣诞树', emoji: '🎄' },
+      building: {
+        id: 'christmas-tree',
+        name: '圣诞树',
+        emoji: '🎄',
+      },
       coins: 800,
       exp: 1500,
     },
   },
 
-  // ---------- 新年跨年 ----------
+  // ============================================================
+  // 🧧 新春庙会
+  // ============================================================
   {
-    id: 'new_year_2027',
-    name: '跨年挑战',
-    emoji: '🎆',
-    desc: '新年限定，完成任务解锁烟花塔',
-    startAt: '2026-12-28',
-    endAt: '2027-01-08',
+    id: 'spring_festival_2027',
+    name: '新春庙会',
+    emoji: '🧧',
+    desc: '新年新气象，完成任务解锁灯笼塔',
+    startAt: '2027-01-25',
+    endAt: '2027-02-15',
+    theme: 'spring',
+
     tasks: [
-      { id: 'focus_5',    name: '完成 5 次专注',      type: 'sessions', target: 5,   reward: 200 },
-      { id: 'total_100',  name: '累计专注 100 分钟',  type: 'minutes',  target: 100, reward: 400 },
-      { id: 'total_300',  name: '累计专注 300 分钟',  type: 'minutes',  target: 300, reward: 900 },
+      {
+        id: 'spring_1',
+        name: '完成 7 次专注',
+        type: 'sessions',
+        target: 7,
+        reward: 200,
+      },
+      {
+        id: 'spring_2',
+        name: '累计专注 150 分钟',
+        type: 'minutes',
+        target: 150,
+        reward: 400,
+      },
+      {
+        id: 'spring_3',
+        name: '累计专注 400 分钟',
+        type: 'minutes',
+        target: 400,
+        reward: 1000,
+      },
     ],
+
     allDoneReward: {
-      building: { id: 'firework_tower', name: '烟花塔', emoji: '🎆' },
+      building: {
+        id: 'lantern-tower',
+        name: '灯笼塔',
+        emoji: '🏮',
+      },
       coins: 1000,
       exp: 2000,
+    },
+  },
+
+  // ============================================================
+  // 🎆 跨年之夜
+  // ============================================================
+  {
+    id: 'new_year_2027',
+    name: '跨年之夜',
+    emoji: '🎆',
+    desc: '辞旧迎新，完成任务解锁烟花塔',
+    startAt: '2026-12-28',
+    endAt: '2027-01-08',
+    theme: 'new_year',
+
+    tasks: [
+      {
+        id: 'newyear_1',
+        name: '完成 3 次专注',
+        type: 'sessions',
+        target: 3,
+        reward: 150,
+      },
+      {
+        id: 'newyear_2',
+        name: '累计专注 90 分钟',
+        type: 'minutes',
+        target: 90,
+        reward: 300,
+      },
+      {
+        id: 'newyear_3',
+        name: '累计专注 200 分钟',
+        type: 'minutes',
+        target: 200,
+        reward: 600,
+      },
+    ],
+
+    allDoneReward: {
+      building: {
+        id: 'firework-tower',
+        name: '烟花塔',
+        emoji: '🎆',
+      },
+      coins: 600,
+      exp: 1200,
     },
   },
 ];
@@ -150,7 +276,6 @@ export function getLiveActivities() {
 // ============================================================
 export function computeActivityProgress(activity, profile) {
   const records = profile.focusRecords || {};
-
   let activityMinutes = 0;
 
   Object.entries(records).forEach(([dateKey, minutes]) => {
@@ -200,9 +325,6 @@ export function computeActivityProgress(activity, profile) {
   };
 }
 
-// ============================================================
-// 获取用户的某个活动的状态
-// ============================================================
 export function getUserActivityState(activity, profile) {
   const activities = profile.activities || {};
   return activities[activity.id] || {
@@ -211,9 +333,6 @@ export function getUserActivityState(activity, profile) {
   };
 }
 
-// ============================================================
-// 默认的活动状态
-// ============================================================
 export function getDefaultActivityState() {
   return {
     claimedTasks: {},

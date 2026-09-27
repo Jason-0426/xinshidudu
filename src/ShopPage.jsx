@@ -1,56 +1,10 @@
 import React from 'react';
 import { VIP_BUILDINGS } from './vipConfig';
+import { BUILDINGS, RARITY_LABEL } from './buildings';
 import './index.css';
 
 // 资源路径工具
 const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
-
-// ---------- 商店里的建筑定义（含价格）----------
-const SHOP_BUILDINGS = [
-  {
-    id: 'house',
-    name: '小木屋',
-    rarity: 'common',
-    price: 0,
-    imgs: [
-      'buildings/house-0.png',
-      'buildings/house-1.png',
-      'buildings/house-2.png',
-      'buildings/house-3.png',
-    ],
-    emoji: null,
-  },
-  {
-    id: 'tree',
-    name: '松树',
-    rarity: 'common',
-    price: 100,
-    imgs: null,
-    emoji: '🌲',
-  },
-  {
-    id: 'well',
-    name: '水井',
-    rarity: 'rare',
-    price: 300,
-    imgs: null,
-    emoji: '⛲',
-  },
-  {
-    id: 'tower',
-    name: '魔法塔',
-    rarity: 'epic',
-    price: 1000,
-    imgs: null,
-    emoji: '🏰',
-  },
-];
-
-const RARITY_LABEL = {
-  common: '普通',
-  rare: '稀有',
-  epic: '史诗',
-};
 
 export default function ShopPage({
   open,
@@ -91,7 +45,7 @@ export default function ShopPage({
       {/* 建筑列表 */}
       <div className="shop-content">
         <div className="shop-grid">
-          {SHOP_BUILDINGS.map((b) => {
+          {BUILDINGS.map((b) => {
             const isUnlocked = unlocked.includes(b.id);
             const canAfford = gold >= b.price;
             const isVipBuilding = VIP_BUILDINGS.includes(b.id);
@@ -104,11 +58,7 @@ export default function ShopPage({
               >
                 {/* 缩略图 */}
                 <div className={`shop-thumb rarity-${b.rarity}`}>
-                  {b.imgs ? (
-                    <img src={asset(b.imgs[0])} alt={b.name} />
-                  ) : (
-                    <span>{b.emoji}</span>
-                  )}
+                  <img src={b.imgs[0]} alt={b.name} />
                   {isVipBuilding && (
                     <span className="vip-shop-badge">👑</span>
                   )}

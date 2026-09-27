@@ -1,35 +1,16 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
+import { BUILDINGS_MAP as BUILDINGS } from './buildings';
 
 // ---------- 资源路径工具 ----------
 const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
 // ---------- 领地配置 ----------
-const GRID_SIZE = 30;
+const GRID_SIZE = 20;
 const TILE_W = 64;
 const TILE_H = 32;
 
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 3;
-
-// ---------- 建筑定义 ----------
-const BUILDINGS = {
-  house: {
-    name: '小木屋',
-    imgs: [
-      'buildings/house-0.png',
-      'buildings/house-1.png',
-      'buildings/house-2.png',
-      'buildings/house-3.png',
-    ],
-    emoji: null,
-    w: 1,
-    h: 1,
-    rarity: 'common',
-  },
-  tree:   { name: '松树',   imgs: null, emoji: '🌲', w: 1, h: 1, rarity: 'common' },
-  well:   { name: '水井',   imgs: null, emoji: '⛲', w: 1, h: 1, rarity: 'rare' },
-  tower:  { name: '魔法塔', imgs: null, emoji: '🏰', w: 1, h: 1, rarity: 'epic' },
-};
 
 // 等距坐标 → 屏幕坐标
 function isoToScreen(x, y) {
@@ -62,7 +43,7 @@ const PlacedBuilding = memo(function PlacedBuilding({
 
   let imgSrc = null;
   if (b.imgs) {
-    imgSrc = b.imgs[rotation % 4];
+    imgSrc = b.imgs[rotation % 2];
   }
 
   // 计算剩余天数
@@ -88,7 +69,7 @@ const PlacedBuilding = memo(function PlacedBuilding({
       title={damaged ? `${b.name}（受损，${daysLeft} 天后消失）` : `${b.name}（点击管理）`}
     >
       {imgSrc ? (
-        <img src={asset(imgSrc)} alt={b.name} className="placed-building-img" />
+        <img src={imgSrc} alt={b.name} className="placed-building-img" />
       ) : (
         <div className="placed-building-emoji">{b.emoji}</div>
       )}
@@ -264,7 +245,7 @@ export default function CastlePage({
     setPlaced((prev) =>
       prev.map((p, i) =>
         i === selectedPlaced
-          ? { ...p, rotation: ((p.rotation || 0) + 1) % 4 }
+          ? { ...p, rotation: ((p.rotation || 0) + 1) % 2 }
           : p
       )
     );
@@ -283,7 +264,7 @@ export default function CastlePage({
   };
 
   // 修复受损建筑
-  const RARITY_COST = { common: 10, rare: 30, epic: 50 };
+  const RARITY_COST = { common: 10, rare: 30, epic: 50, legendary: 200 };
 
   const repairBuilding = () => {
     if (selectedPlaced === null) return;
@@ -307,6 +288,11 @@ export default function CastlePage({
     ));
     closeBuildingMenu();
   };
+
+  // 仓库里只显示数量 > 0 的建筑
+  const inventoryItems = Object.entries(BUILDINGS).filter(
+    ([id]) => (inventory[id] || 0) > 0
+  );
 
   // ---------- 渲染 ----------
   return (
@@ -420,7 +406,7 @@ export default function CastlePage({
               className="building-menu-item"
               onClick={rotateBuilding}
             >
-              🔄 旋转 90°
+              🔄 翻转方向
             </button>
             <button
               className="building-menu-item danger"
@@ -441,26 +427,38 @@ export default function CastlePage({
       <div className="castle-inventory">
         <div className="inventory-title">🏠 建筑仓库（拖拽到领地放置）</div>
         <div className="inventory-list">
-          {Object.entries(BUILDINGS).map(([id, b]) => {
-            const count = inventory[id] || 0;
-            return (
-              <div
-                key={id}
-                className={`inventory-item ${count <= 0 ? 'disabled' : ''} ${dragging === id ? 'dragging' : ''}`}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  startDragFromInventory(id);
-                }}
-                onMouseUp={handleMouseUp}
-              >
-                <div className="inventory-thumb">
-                  {b.imgs ? <img src={asset(b.imgs[0])} alt={b.name} /> : <span>{b.emoji}</span>}
+          {inventoryItems.length === 0 ? (
+            <div style={{
+              padding: '20px',
+              color: 'var(--text-muted)',
+              fontSize: '13px',
+              textAlign: 'center',
+              width: '100%',
+            }}>
+              仓库空空如也，去专注获得建筑吧
+            </div>
+          ) : (
+            inventoryItems.map(([id, b]) => {
+              const count = inventory[id] || 0;
+              return (
+                <div
+                  key={id}
+                  className={`inventory-item ${dragging === id ? 'dragging' : ''}`}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    startDragFromInventory(id);
+                  }}
+                  onMouseUp={handleMouseUp}
+                >
+                  <div className="inventory-thumb">
+                    <img src={b.imgs[0]} alt={b.name} />
+                  </div>
+                  <div className="inventory-name">{b.name}</div>
+                  <div className="inventory-count">×{count}</div>
                 </div>
-                <div className="inventory-name">{b.name}</div>
-                <div className="inventory-count">×{count}</div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>
