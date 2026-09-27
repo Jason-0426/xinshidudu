@@ -213,6 +213,37 @@ useEffect(() => {
         console.error('visibilitychange 恢复失败：', e);
       }
     }
+    
+      // 兜底：每 5 秒检查一次时间是否对
+  useEffect(() => {
+    if (isPaused) return;
+
+    const check = () => {
+      try {
+        const saved = localStorage.getItem('xinshidudu_focus');
+        if (!saved) return;
+        const state = JSON.parse(saved);
+        const now = Date.now();
+        const totalElapsedSec = Math.floor(
+          (now - state.startedAt - state.totalPausedMs) / 1000
+        );
+
+        if (state.mode !== 'stopwatch') {
+          const totalSec = state.duration * 60;
+          const left = Math.max(0, totalSec - totalElapsedSec);
+          setTimeLeft((prev) => {
+            // 只在大幅偏差时更新（避免抖动）
+            if (Math.abs(prev - left) > 3) return left;
+            return prev;
+          });
+        }
+      } catch {}
+    };
+
+    const timer = setInterval(check, 5000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -232,6 +263,43 @@ const [realDuration, setRealDuration] = useState(() => {
   return duration;
 });
   const [isPaused, setIsPaused] = useState(false);
+    // 切回前台时，重新计算剩余时间
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isPaused) {
+        try {
+          const saved = localStorage.getItem('xinshidudu_focus');
+          if (saved) {
+            const state = JSON.parse(saved);
+            const now = Date.now();
+            const totalElapsedSec = Math.floor(
+              (now - state.startedAt - state.totalPausedMs) / 1000
+            );
+
+            if (state.mode === 'stopwatch') {
+              setElapsed(Math.min(totalElapsedSec, 3 * 60 * 60));
+            } else {
+              const totalSec = state.duration * 60;
+              const left = Math.max(0, totalSec - totalElapsedSec);
+              if (left <= 0) {
+                setTimeLeft(0);
+                setTimeout(() => onFinish(state.duration), 0);
+              } else {
+                setTimeLeft(left);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('visibilitychange 恢复失败：', e);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isPaused, onFinish]);
   const [weatherMenuOpen, setWeatherMenuOpen] = useState(false);
   const [soundMenuOpen, setSoundMenuOpen] = useState(false);
 
