@@ -8794,7 +8794,11 @@ body > * {
    ============================================================ */
 .theme-particles {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;     /* ← 手机用这个 */
   pointer-events: none;
   z-index: 9999;
   overflow: hidden;
@@ -8855,26 +8859,103 @@ body > * {
 }
 
 @keyframes pFloat {
-  0%   { transform: translate(0, 50vh); opacity: 0; }
+  0%   { transform: translate(0, 50dvh); opacity: 0; }
   10%  { opacity: 1; }
-  50%  { transform: translate(40px, 30vh); opacity: 1; }
+  50%  { transform: translate(40px, 30dvh); opacity: 1; }
   90%  { opacity: 1; }
-  100% { transform: translate(-30px, -20vh); opacity: 0; }
+  100% { transform: translate(-30px, -20dvh); opacity: 0; }
 }
 
 @keyframes pRise {
-  0%   { transform: translate(0, 100vh) scale(0.5); opacity: 0; }
+  0%   { transform: translate(0, 100dvh) scale(0.5); opacity: 0; }
   10%  { opacity: 0.9; }
   90%  { opacity: 0.9; }
-  100% { transform: translate(20px, -10vh) scale(1); opacity: 0; }
+  100% { transform: translate(20px, -10dvh) scale(1); opacity: 0; }
 }
 
 @keyframes pFall {
-  0%   { transform: translate(0, -10vh) rotate(0deg); opacity: 0; }
+  0%   { transform: translate(0, -10dvh) rotate(0deg); opacity: 0; }
   10%  { opacity: 0.9; }
-  50%  { transform: translate(60px, 50vh) rotate(180deg); }
+  50%  { transform: translate(60px, 50dvh) rotate(180deg); }
   90%  { opacity: 0.9; }
-  100% { transform: translate(-30px, 110vh) rotate(360deg); opacity: 0; }
+  100% { transform: translate(-30px, 110dvh) rotate(360deg); opacity: 0; }
+}
+
+/* 手机顶部安全区 */
+body {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* App 容器也加安全区 */
+@media (max-width: 899px) {
+  .app-viewport {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .top-bar {
+    padding-top: calc(12px + env(safe-area-inset-top, 0)) !important;
+  }
+}
+
+/* ============================================================
+   手机视口 + 安全区修复
+   ============================================================ */
+
+/* 粒子层：用 dvh 适配手机浏览器 */
+.theme-particles {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  overflow: hidden !important;
+}
+
+/* 更新粒子的 keyframes 用 dvh */
+@keyframes pFloat {
+  0%   { transform: translate(0, 50dvh); opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { transform: translate(40px, 30dvh); opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate(-30px, -20dvh); opacity: 0; }
+}
+
+@keyframes pRise {
+  0%   { transform: translate(0, 100dvh) scale(0.5); opacity: 0; }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.9; }
+  100% { transform: translate(20px, -10dvh) scale(1); opacity: 0; }
+}
+
+@keyframes pFall {
+  0%   { transform: translate(0, -10dvh) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.9; }
+  50%  { transform: translate(60px, 50dvh) rotate(180deg); }
+  90%  { opacity: 0.9; }
+  100% { transform: translate(-30px, 110dvh) rotate(360deg); opacity: 0; }
+}
+
+/* 手机顶部安全区（iPhone 刘海 / 状态栏） */
+@media (max-width: 899px) {
+  body {
+    padding-top: env(safe-area-inset-top, 0) !important;
+  }
+
+  .app-viewport {
+    padding-top: env(safe-area-inset-top, 0) !important;
+  }
+
+  .top-bar {
+    padding-top: calc(12px + env(safe-area-inset-top, 0)) !important;
+  }
+
+  /* 抽屉顶部也加安全区 */
+  .drawer {
+    padding-top: calc(60px + env(safe-area-inset-top, 0)) !important;
+  }
 }
 /* ============================================================
    END
