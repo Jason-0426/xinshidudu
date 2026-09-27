@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './index.css';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.1';
 
 // ---------- 子页面内容 ----------
 const TERMS_TEXT = `

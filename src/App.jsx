@@ -1569,6 +1569,17 @@ useEffect(() => {
               </div>
             </div>
             
+            <button
+  className="theme-toggle-btn mobile"
+  onClick={() => {
+    const idx = THEMES.findIndex((t) => t.id === theme);
+    const next = THEMES[(idx + 1) % THEMES.length];
+    setTheme(next.id);
+  }}
+>
+  {THEMES.find((t) => t.id === theme)?.emoji}
+</button>
+
             <div className="glass gold-card">
               <img src={asset('coin.png')} alt="金币" className="gold-icon" />
               <span>{gold}</span>
