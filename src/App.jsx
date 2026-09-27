@@ -155,119 +155,56 @@ const FocusView = memo(function FocusView({
   toggleAudio,
   placed,
 }) {
-  // 从 localStorage 恢复状态
-const getInitialState = () => {
-  try {
-    const saved = localStorage.getItem('xinshidudu_focus');
-    if (!saved) return { timeLeft: duration * 60, elapsed: 0 };
-
-    const state = JSON.parse(saved);
-    const now = Date.now();
-    const totalElapsedSec = Math.floor(
-      (now - state.startedAt - state.totalPausedMs) / 1000
-    );
-
-    if (state.mode === 'stopwatch') {
-      return {
-        timeLeft: duration * 60,
-        elapsed: Math.max(0, Math.min(totalElapsedSec, 3 * 60 * 60)),
-      };
-    } else {
-      const totalSec = state.duration * 60;
-      const left = Math.max(0, totalSec - totalElapsedSec);
-      return {
-        timeLeft: left,
-        elapsed: totalElapsedSec,
-      };
-    }
-  } catch {
-    return { timeLeft: duration * 60, elapsed: 0 };
-  }
-};
-
-const initial = getInitialState();
-const [timeLeft, setTimeLeft] = useState(initial.timeLeft);
-const [elapsed, setElapsed] = useState(initial.elapsed);
-
-// 切回前台时，重新计算剩余时间
-useEffect(() => {
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'visible' && !isPaused) {
-      try {
-        const saved = localStorage.getItem('xinshidudu_focus');
-        if (saved) {
-          const state = JSON.parse(saved);
-          const now = Date.now();
-          const totalElapsedSec = Math.floor(
-            (now - state.startedAt - state.totalPausedMs) / 1000
-          );
-
-          if (state.mode === 'stopwatch') {
-            setElapsed(Math.min(totalElapsedSec, 3 * 60 * 60));
-          } else {
-            const totalSec = state.duration * 60;
-            const left = Math.max(0, totalSec - totalElapsedSec);
-            setTimeLeft(left);
-          }
-        }
-      } catch (e) {
-        console.error('visibilitychange 恢复失败：', e);
-      }
-    }
-  };
-
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  };
-}, [isPaused]);
-
-// 兜底：每 5 秒检查一次时间是否对
-useEffect(() => {
-  if (isPaused) return;
-
-  const check = () => {
+  // 从 localStorage 恢复初始状态
+  const getInitialState = () => {
     try {
       const saved = localStorage.getItem('xinshidudu_focus');
-      if (!saved) return;
+      if (!saved) return { timeLeft: duration * 60, elapsed: 0 };
+
       const state = JSON.parse(saved);
       const now = Date.now();
       const totalElapsedSec = Math.floor(
         (now - state.startedAt - state.totalPausedMs) / 1000
       );
 
-      if (state.mode !== 'stopwatch') {
+      if (state.mode === 'stopwatch') {
+        return {
+          timeLeft: duration * 60,
+          elapsed: Math.max(0, Math.min(totalElapsedSec, 3 * 60 * 60)),
+        };
+      } else {
         const totalSec = state.duration * 60;
         const left = Math.max(0, totalSec - totalElapsedSec);
-        setTimeLeft((prev) => {
-          if (Math.abs(prev - left) > 3) return left;
-          return prev;
-        });
+        return {
+          timeLeft: left,
+          elapsed: totalElapsedSec,
+        };
       }
-    } catch {}
+    } catch {
+      return { timeLeft: duration * 60, elapsed: 0 };
+    }
   };
 
-  const timer = setInterval(check, 5000);
-  return () => clearInterval(timer);
-}, [isPaused]);
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  };
-}, [isPaused]);
-// 从 localStorage 恢复真实的总时长
-const [realDuration, setRealDuration] = useState(() => {
-  try {
-    const saved = localStorage.getItem('xinshidudu_focus');
-    if (saved) {
-      const state = JSON.parse(saved);
-      return state.duration || duration;
-    }
-  } catch {}
-  return duration;
-});
+  const initial = getInitialState();
+  const [timeLeft, setTimeLeft] = useState(initial.timeLeft);
+  const [elapsed, setElapsed] = useState(initial.elapsed);
   const [isPaused, setIsPaused] = useState(false);
-    // 切回前台时，重新计算剩余时间
+  const [weatherMenuOpen, setWeatherMenuOpen] = useState(false);
+  const [soundMenuOpen, setSoundMenuOpen] = useState(false);
+
+  // 真实总时长
+  const [realDuration, setRealDuration] = useState(() => {
+    try {
+      const saved = localStorage.getItem('xinshidudu_focus');
+      if (saved) {
+        const state = JSON.parse(saved);
+        return state.duration || duration;
+      }
+    } catch {}
+    return duration;
+  });
+
+  // 切回前台时，重新计算剩余时间
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && !isPaused) {
@@ -285,12 +222,7 @@ const [realDuration, setRealDuration] = useState(() => {
             } else {
               const totalSec = state.duration * 60;
               const left = Math.max(0, totalSec - totalElapsedSec);
-              if (left <= 0) {
-                setTimeLeft(0);
-                setTimeout(() => onFinish(state.duration), 0);
-              } else {
-                setTimeLeft(left);
-              }
+              setTimeLeft(left);
             }
           }
         } catch (e) {
@@ -303,10 +235,38 @@ const [realDuration, setRealDuration] = useState(() => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isPaused, onFinish]);
-  const [weatherMenuOpen, setWeatherMenuOpen] = useState(false);
-  const [soundMenuOpen, setSoundMenuOpen] = useState(false);
+  }, [isPaused]);
 
+  // 兜底：每 5 秒检查一次时间
+  useEffect(() => {
+    if (isPaused) return;
+
+    const check = () => {
+      try {
+        const saved = localStorage.getItem('xinshidudu_focus');
+        if (!saved) return;
+        const state = JSON.parse(saved);
+        const now = Date.now();
+        const totalElapsedSec = Math.floor(
+          (now - state.startedAt - state.totalPausedMs) / 1000
+        );
+
+        if (state.mode !== 'stopwatch') {
+          const totalSec = state.duration * 60;
+          const left = Math.max(0, totalSec - totalElapsedSec);
+          setTimeLeft((prev) => {
+            if (Math.abs(prev - left) > 3) return left;
+            return prev;
+          });
+        }
+      } catch {}
+    };
+
+    const timer = setInterval(check, 5000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  // 计时器
   useEffect(() => {
     if (isPaused) return;
 
@@ -345,9 +305,10 @@ const [realDuration, setRealDuration] = useState(() => {
   const displayTime = focusMode === 'stopwatch' ? formatTime(elapsed) : formatTime(timeLeft);
 
   const progressPercent =
-  focusMode === 'stopwatch'
-    ? Math.min((elapsed / (3 * 60 * 60)) * 100, 100)
-    : Math.min(((realDuration * 60 - timeLeft) / (realDuration * 60)) * 100, 100);
+    focusMode === 'stopwatch'
+      ? Math.min((elapsed / (3 * 60 * 60)) * 100, 100)
+      : Math.min(((realDuration * 60 - timeLeft) / (realDuration * 60)) * 100, 100);
+
   const handleManualFinish = () => {
     const minutes = Math.floor(elapsed / 60);
     if (minutes < 1) {
@@ -465,29 +426,9 @@ const [realDuration, setRealDuration] = useState(() => {
         </div>
 
         <div className="focus-actions">
-          <button className="pause-btn" onClick={() => {
-  const newPaused = !isPaused;
-  setIsPaused(newPaused);
-
-  try {
-    const saved = localStorage.getItem('xinshidudu_focus');
-    if (saved) {
-      const state = JSON.parse(saved);
-      if (newPaused) {
-        state.pausedAt = Date.now();
-      } else {
-        // 恢复：累加暂停时长
-        if (state.pausedAt) {
-          state.totalPausedMs += Date.now() - state.pausedAt;
-          state.pausedAt = null;
-        }
-      }
-      localStorage.setItem('xinshidudu_focus', JSON.stringify(state));
-    }
-  } catch {}
-}}>
-  {isPaused ? '▶ 继续' : '⏸ 暂停'}
-</button>
+          <button className="pause-btn" onClick={() => setIsPaused((v) => !v)}>
+            {isPaused ? '▶ 继续' : '⏸ 暂停'}
+          </button>
 
           {focusMode === 'stopwatch' ? (
             <button className="giveup-btn" onClick={handleManualFinish}>
@@ -502,7 +443,8 @@ const [realDuration, setRealDuration] = useState(() => {
       </div>
     </div>
   );
-  
+});
+
 // ============================================================
 // 主 App
 // ============================================================
