@@ -918,8 +918,13 @@ useEffect(() => {
       if (data.placed) setPlaced(data.placed);
       if (data.unlocked) setUnlocked(data.unlocked);
       if (data.profile && Object.keys(data.profile).length > 0) {
-        setProfile((p) => ({ ...p, ...data.profile }));
-      }
+  setProfile((p) => ({
+    ...p,
+    ...data.profile,
+    // 强制用数据库的 vip 覆盖前端
+    vip: data.profile.vip || p.vip,
+  }));
+}
       if (data.is_dev) setIsDev(true);
       else setIsDev(false);
     } else {
