@@ -155,8 +155,50 @@ const FocusView = memo(function FocusView({
   toggleAudio,
   placed,
 }) {
-  const [timeLeft, setTimeLeft] = useState(duration * 60);
-  const [elapsed, setElapsed] = useState(0);
+  // 从 localStorage 恢复状态
+const getInitialState = () => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (!saved) return { timeLeft: duration * 60, elapsed: 0 };
+
+    const state = JSON.parse(saved);
+    const now = Date.now();
+    const totalElapsedSec = Math.floor(
+      (now - state.startedAt - state.totalPausedMs) / 1000
+    );
+
+    if (state.mode === 'stopwatch') {
+      return {
+        timeLeft: duration * 60,
+        elapsed: Math.max(0, Math.min(totalElapsedSec, 3 * 60 * 60)),
+      };
+    } else {
+      const totalSec = state.duration * 60;
+      const left = Math.max(0, totalSec - totalElapsedSec);
+      return {
+        timeLeft: left,
+        elapsed: totalElapsedSec,
+      };
+    }
+  } catch {
+    return { timeLeft: duration * 60, elapsed: 0 };
+  }
+};
+
+const initial = getInitialState();
+const [timeLeft, setTimeLeft] = useState(initial.timeLeft);
+const [elapsed, setElapsed] = useState(initial.elapsed);
+// 从 localStorage 恢复真实的总时长
+const [realDuration, setRealDuration] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (saved) {
+      const state = JSON.parse(saved);
+      return state.duration || duration;
+    }
+  } catch {}
+  return duration;
+});
   const [isPaused, setIsPaused] = useState(false);
   const [weatherMenuOpen, setWeatherMenuOpen] = useState(false);
   const [soundMenuOpen, setSoundMenuOpen] = useState(false);
@@ -199,10 +241,9 @@ const FocusView = memo(function FocusView({
   const displayTime = focusMode === 'stopwatch' ? formatTime(elapsed) : formatTime(timeLeft);
 
   const progressPercent =
-    focusMode === 'stopwatch'
-      ? Math.min((elapsed / (3 * 60 * 60)) * 100, 100)
-      : Math.min(((duration * 60 - timeLeft) / (duration * 60)) * 100, 100);
-
+  focusMode === 'stopwatch'
+    ? Math.min((elapsed / (3 * 60 * 60)) * 100, 100)
+    : Math.min(((realDuration * 60 - timeLeft) / (realDuration * 60)) * 100, 100);
   const handleManualFinish = () => {
     const minutes = Math.floor(elapsed / 60);
     if (minutes < 1) {
@@ -320,9 +361,29 @@ const FocusView = memo(function FocusView({
         </div>
 
         <div className="focus-actions">
-          <button className="pause-btn" onClick={() => setIsPaused((v) => !v)}>
-            {isPaused ? '▶ 继续' : '⏸ 暂停'}
-          </button>
+          <button className="pause-btn" onClick={() => {
+  const newPaused = !isPaused;
+  setIsPaused(newPaused);
+
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (saved) {
+      const state = JSON.parse(saved);
+      if (newPaused) {
+        state.pausedAt = Date.now();
+      } else {
+        // 恢复：累加暂停时长
+        if (state.pausedAt) {
+          state.totalPausedMs += Date.now() - state.pausedAt;
+          state.pausedAt = null;
+        }
+      }
+      localStorage.setItem('xinshidudu_focus', JSON.stringify(state));
+    }
+  } catch {}
+}}>
+  {isPaused ? '▶ 继续' : '⏸ 暂停'}
+</button>
 
           {focusMode === 'stopwatch' ? (
             <button className="giveup-btn" onClick={handleManualFinish}>
@@ -484,6 +545,31 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 检查是否有未完成的专注
+useEffect(() => {
+  if (!dataLoaded) return;  // 等数据加载完再检查
+
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (saved) {
+      const state = JSON.parse(saved);
+      
+      // 计算已经过了多久
+      const elapsed = Date.now() - state.startedAt - state.totalPausedMs;
+      
+      // 如果不到 3 小时 → 恢复专注页
+      if (elapsed < 3 * 60 * 60 * 1000) {
+        setView('focus');
+      } else {
+        // 超过 3 小时 → 清除
+        localStorage.removeItem('xinshidudu_focus');
+      }
+    }
+  } catch (e) {
+    console.error('恢复专注失败：', e);
+  }
+}, [dataLoaded]);
 
   // ---------- 自动同步到 Supabase ----------
   useEffect(() => {
@@ -773,9 +859,21 @@ export default function App() {
 
   const toggleAudio = () => setAudioOn((v) => !v);
 
-  const startFocus = () => setView('focus');
+  const startFocus = () => {
+  // 记录专注开始时间
+  const focusState = {
+    mode: focusMode,
+    duration,
+    startedAt: Date.now(),
+    pausedAt: null,
+    totalPausedMs: 0,
+  };
+  localStorage.setItem('xinshidudu_focus', JSON.stringify(focusState));
+  setView('focus');
+};
 
   const stopFocus = () => {
+    localStorage.removeItem('xinshidudu_focus');  // ← 加这行
     if (placed.length > 0) {
       const randomIdx = Math.floor(Math.random() * placed.length);
       setPlaced((prev) =>
@@ -817,6 +915,7 @@ export default function App() {
   };
 
   const finishFocus = (minutes) => {
+    localStorage.removeItem('xinshidudu_focus');  // ← 加这行
     const d = new Date();
     const todayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const hour = d.getHours();

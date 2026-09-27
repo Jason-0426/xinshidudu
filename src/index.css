@@ -1831,11 +1831,33 @@ input, textarea {
   pointer-events: none;
 }
 
+/* ============================================================
+   城堡：草地 + 建筑
+   ============================================================ */
+
+/* ---------- 草地格子 ---------- */
 .iso-ground {
-  background: var(--grass-bg);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    var(--grass-bg);
   outline: 1px solid var(--grass-border);
+  transition: background 0.2s ease;
 }
 
+/* 有建筑 → 格子变暗（像"被占据"） */
+.iso-ground.has-building {
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0.2) 60%,
+      transparent 100%
+    ),
+    var(--grass-bg);
+  outline: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+/* 墙 */
 .iso-wall {
   background: rgba(75, 85, 99, 0.85);
   outline: 1px solid rgba(107, 114, 128, 0.6);
@@ -1844,23 +1866,49 @@ input, textarea {
 /* ---------- 已放置的建筑 ---------- */
 .placed-building {
   position: absolute;
-  transform: translate(-50%, -75%);
+  transform: translate(-50%, -90%);
   cursor: pointer;
   pointer-events: auto;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
-  z-index: 1;
+  z-index: 10;
   transition: filter 0.2s var(--ease-snappy);
 }
 
-.placed-building:hover {
-  filter: drop-shadow(0 4px 12px rgba(30, 215, 96, 0.5));
+/* 底部椭圆阴影（落地感） */
+.placed-building::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65%;
+  height: 12px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 75%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1.5px);
 }
 
+/* hover */
+.placed-building:hover {
+  filter: brightness(1.1);
+  z-index: 20;
+}
+
+/* 建筑图片 */
 .placed-building-img {
   width: 64px;
-  height: auto;
+  height: 64px;
+  object-fit: contain;
+  object-position: bottom center;
   image-rendering: pixelated;
   display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
 .placed-building-emoji {
@@ -1868,6 +1916,7 @@ input, textarea {
   line-height: 1;
 }
 
+/* 悬停指示器 */
 .hover-indicator {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -1875,7 +1924,7 @@ input, textarea {
   background: var(--grass-hover);
   outline: 2px solid var(--green);
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
   animation: hoverPulse 1s infinite;
 }
 
@@ -1890,11 +1939,11 @@ input, textarea {
 }
 
 @keyframes damagedShake {
-  0%, 90%, 100% { transform: translate(-50%, -75%) rotate(0deg); }
-  92% { transform: translate(-50%, -75%) rotate(-2deg); }
-  94% { transform: translate(-50%, -75%) rotate(2deg); }
-  96% { transform: translate(-50%, -75%) rotate(-1.5deg); }
-  98% { transform: translate(-50%, -75%) rotate(1.5deg); }
+  0%, 90%, 100% { transform: translate(-50%, -90%) rotate(0deg); }
+  92% { transform: translate(-50%, -90%) rotate(-2deg); }
+  94% { transform: translate(-50%, -90%) rotate(2deg); }
+  96% { transform: translate(-50%, -90%) rotate(-1.5deg); }
+  98% { transform: translate(-50%, -90%) rotate(1.5deg); }
 }
 
 .damage-badge {
@@ -1960,6 +2009,105 @@ input, textarea {
     0 -12px 40px rgba(0, 0, 0, 0.4);
   padding: 14px 0 18px;
   z-index: 10;
+}
+
+.inventory-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  padding: 0 20px 10px;
+}
+
+.inventory-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 20px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.inventory-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.inventory-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+.inventory-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 88px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: grab;
+  user-select: none;
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 var(--glass-highlight-soft);
+  transition: all 0.35s var(--ease-damp);
+}
+
+.inventory-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.inventory-item:active {
+  transform: scale(0.95);
+}
+
+.inventory-item.dragging {
+  background: var(--green-soft);
+  border-color: var(--green);
+  box-shadow: 0 0 24px rgba(30, 215, 96, 0.3);
+}
+
+.inventory-thumb {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.inventory-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.inventory-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.inventory-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 .inventory-title {
@@ -7751,6 +7899,361 @@ body:has(.login-page) {
 
 .castle-world {
   will-change: transform;
+}
+/* ============================================================
+   仓库：防止手机长按选中
+   ============================================================ */
+.inventory-item,
+.inventory-item * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.castle-viewport,
+.castle-world,
+.castle-world * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* ============================================================
+   城堡建筑优化
+   ============================================================ */
+
+/* 1. 建筑定位 + 落地阴影 */
+.placed-building {
+  position: absolute;
+  transform: translate(-50%, -90%);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1;
+  transition: filter 0.2s var(--ease-snappy);
+}
+
+.placed-building:hover {
+  filter: brightness(1.15);
+}
+
+/* 底部椭圆阴影 */
+.placed-building::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 底部落地光晕 */
+.placed-building::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 20px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* 2. 统一建筑大小 */
+.placed-building-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* 3. 草地纹理 */
+.iso-ground {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    var(--grass-bg);
+  outline: 1px solid var(--grass-border);
+}
+
+.iso-ground:nth-child(7n) {
+  background:
+    radial-gradient(circle at 60% 60%, rgba(0, 0, 0, 0.05) 0%, transparent 50%),
+    var(--grass-bg);
+}
+
+.iso-ground:nth-child(11n) {
+  background:
+    radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    var(--grass-bg);
+}
+
+/* 4. 建筑被选中时的效果 */
+.placed-building.damaged {
+  animation: damagedShake 2s infinite;
+}
+/* ============================================================
+   建筑底部对齐修复
+   ============================================================ */
+
+.placed-building {
+  position: absolute;
+  transform: translate(-50%, -100%) !important;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1;
+  transition: filter 0.2s var(--ease-snappy);
+}
+
+.placed-building-img {
+  width: 64px !important;
+  height: 64px !important;
+  object-fit: contain !important;
+  object-position: bottom center !important;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* 底部椭圆阴影（落地感） */
+.placed-building::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 8px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.45) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+/* ============================================================
+   建筑视觉优化 v2
+   ============================================================ */
+
+/* 1. 建筑：让所有建筑视觉高度接近 */
+.placed-building {
+  transform: translate(-50%, -100%) !important;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 64px;
+  height: 80px;
+  /* 关键：让建筑"扎根"在地面 */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* 2. 建筑图片：统一高度，宽度自适应 */
+.placed-building-img {
+  width: auto !important;
+  height: 72px !important;
+  max-width: 72px !important;
+  object-fit: contain;
+  object-position: bottom center;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* 3. 底部阴影：更深更真实 */
+.placed-building::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 10px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 80%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1px);
+}
+
+/* 4. 建筑底部接地光晕 */
+.placed-building::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 6px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -2;
+  filter: blur(2px);
+}
+
+/* 5. 草地：加细微纹理 */
+.iso-ground {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.04) 0%, transparent 50%),
+    var(--grass-bg);
+  outline: 1px solid var(--grass-border);
+}
+
+/* 6. 去掉 hover 时的亮度过曝 */
+.placed-building:hover {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)) brightness(1.1);
+  cursor: pointer;
+}
+/* ============================================================
+   城堡建筑视觉优化
+   ============================================================ */
+
+/* 1. 建筑定位：底部中心对准格子中心 */
+.placed-building {
+  position: absolute;
+  transform: translate(-50%, -85%) !important;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 10;
+  transition: filter 0.2s var(--ease-snappy);
+}
+
+/* 2. 建筑图片：底部对齐，统一高度 */
+.placed-building-img {
+  width: auto !important;
+  height: 80px !important;
+  max-width: 96px !important;
+  object-fit: contain;
+  object-position: bottom center;
+  image-rendering: pixelated;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* 3. 建筑底部椭圆阴影 */
+.placed-building::after {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 10px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 80%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(2px);
+}
+
+/* 4. 草地：细微纹理 */
+.iso-ground {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.06) 0%, transparent 50%),
+    var(--grass-bg);
+  outline: 1px solid var(--grass-border);
+}
+
+/* 5. 悬停效果 */
+.placed-building:hover {
+  filter: brightness(1.1);
+  cursor: pointer;
+  z-index: 20;
+}
+
+/* 6. 受损建筑抖动 */
+.placed-building.damaged {
+  animation: damagedShake 2s infinite;
+}
+
+@keyframes damagedShake {
+  0%, 90%, 100% { transform: translate(-50%, -85%) rotate(0deg); }
+  92% { transform: translate(-50%, -85%) rotate(-2deg); }
+  94% { transform: translate(-50%, -85%) rotate(2deg); }
+  96% { transform: translate(-50%, -85%) rotate(-1.5deg); }
+  98% { transform: translate(-50%, -85%) rotate(1.5deg); }
+}
+
+/* 7. 悬停指示器（拖拽时显示的格子） */
+.hover-indicator {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: rgba(30, 215, 96, 0.4);
+  outline: 2px solid rgba(30, 215, 96, 0.8);
+  pointer-events: none;
+  z-index: 5;
+  animation: hoverPulse 1s infinite;
+}
+
+@keyframes hoverPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================================
+   电脑版侧栏：允许滚动
+   ============================================================ */
+.desktop-sidebar {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: calc(100vh - 48px) !important;
+  max-height: calc(100vh - 48px) !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.desktop-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.desktop-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.desktop-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+.desktop-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-group {
+  flex-shrink: 0 !important;
+}
+
+.sidebar-item {
+  flex-shrink: 0 !important;
+}
+
+.sidebar-profile {
+  flex-shrink: 0 !important;
 }
 /* ============================================================
    END

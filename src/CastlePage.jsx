@@ -20,11 +20,12 @@ function isoToScreen(x, y) {
 }
 
 // 单个格子
-const IsoTile = memo(function IsoTile({ x, y, isWall }) {
+const IsoTile = memo(function IsoTile({ x, y, isWall, hasBuilding }) {
   const { x: sx, y: sy } = isoToScreen(x, y);
+
   return (
     <div
-      className={`iso-tile ${isWall ? 'iso-wall' : 'iso-ground'}`}
+      className={`iso-tile ${isWall ? 'iso-wall' : 'iso-ground'} ${hasBuilding ? 'has-building' : ''}`}
       style={{ left: sx, top: sy, width: TILE_W, height: TILE_H }}
     />
   );
@@ -168,6 +169,63 @@ export default function CastlePage({
     return () => vp.removeEventListener('wheel', onWheel);
   }, [open, offset, scale]);
 
+  // ---------- 全局触摸监听（处理拖拽建筑）----------
+useEffect(() => {
+  if (!open) return;
+
+  const handleGlobalTouchMove = (e) => {
+    if (!draggingRef.current) return;
+    if (!viewportRef.current) return;
+
+    e.preventDefault();
+
+    const t = e.touches[0];
+    if (!t) return;
+
+    const rect = viewportRef.current.getBoundingClientRect();
+    const mx = (t.clientX - rect.left - offset.x) / scale;
+    const my = (t.clientY - rect.top - offset.y) / scale;
+    const tile = screenToIso(mx, my);
+
+    if (tile && tile.x >= 0 && tile.x < GRID_SIZE && tile.y >= 0 && tile.y < GRID_SIZE) {
+      setHoverTile(tile);
+    } else {
+      setHoverTile(null);
+    }
+  };
+
+  const handleGlobalTouchEnd = (e) => {
+    if (!draggingRef.current) return;
+
+    // 放下建筑
+    if (hoverTile) {
+      const buildingId = draggingRef.current;
+      const occupied = placed.some((p) => p.x === hoverTile.x && p.y === hoverTile.y);
+      if (!occupied) {
+        setPlaced((prev) => [...prev, { x: hoverTile.x, y: hoverTile.y, buildingId }]);
+        setInventory((prev) => ({
+          ...prev,
+          [buildingId]: Math.max(0, (prev[buildingId] || 0) - 1),
+        }));
+      }
+    }
+
+    draggingRef.current = null;
+    setDragging(null);
+    setHoverTile(null);
+  };
+
+  window.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
+  window.addEventListener('touchend', handleGlobalTouchEnd);
+  window.addEventListener('touchcancel', handleGlobalTouchEnd);
+
+  return () => {
+    window.removeEventListener('touchmove', handleGlobalTouchMove);
+    window.removeEventListener('touchend', handleGlobalTouchEnd);
+    window.removeEventListener('touchcancel', handleGlobalTouchEnd);
+  };
+}, [open, offset, scale, hoverTile, placed, setPlaced, setInventory]);
+
   // 屏幕坐标 → 等距格坐标
   const screenToIso = (sx, sy) => {
     const x = (sx / (TILE_W / 2) + sy / (TILE_H / 2)) / 2;
@@ -287,21 +345,6 @@ const handleTouchStart = (e) => {
 const handleTouchMove = (e) => {
   e.preventDefault();
 
-  // 从仓库拖建筑
-  if (draggingRef.current && viewportRef.current) {
-    const rect = viewportRef.current.getBoundingClientRect();
-    const t = e.touches[0];
-    const mx = (t.clientX - rect.left - offset.x) / scale;
-    const my = (t.clientY - rect.top - offset.y) / scale;
-    const tile = screenToIso(mx, my);
-    if (tile && tile.x >= 0 && tile.x < GRID_SIZE && tile.y >= 0 && tile.y < GRID_SIZE) {
-      setHoverTile(tile);
-    } else {
-      setHoverTile(null);
-    }
-    return;
-  }
-
   const state = touchStateRef.current;
 
   if (state.mode === 'pinch' && e.touches.length === 2) {
@@ -343,21 +386,6 @@ const handleTouchMove = (e) => {
 
 const handleTouchEnd = (e) => {
   const state = touchStateRef.current;
-
-  // 从仓库拖建筑结束
-  if (draggingRef.current && hoverTile) {
-    const buildingId = draggingRef.current;
-    const occupied = placed.some((p) => p.x === hoverTile.x && p.y === hoverTile.y);
-    if (!occupied) {
-      setPlaced((prev) => [...prev, { x: hoverTile.x, y: hoverTile.y, buildingId }]);
-      setInventory((prev) => ({
-        ...prev,
-        [buildingId]: Math.max(0, (prev[buildingId] || 0) - 1),
-      }));
-    }
-    draggingRef.current = null;
-    setHoverTile(null);
-  }
 
   // 触摸结束 → 重置状态
   if (e.touches.length === 0) {
@@ -481,16 +509,37 @@ const handleTouchEnd = (e) => {
             transformOrigin: '0 0',
           }}
         >
-          {Array.from({ length: GRID_SIZE }).map((_, x) =>
-            Array.from({ length: GRID_SIZE }).map((_, y) => {
-              const isWall =
-                x === 0 || x === GRID_SIZE - 1 ||
-                y === 0 || y === GRID_SIZE - 1;
-              return (
-                <IsoTile key={`${x}-${y}`} x={x} y={y} isWall={isWall} />
-              );
-            })
-          )}
+          {(() => {
+  // 计算所有被建筑覆盖的格子
+  const coveredTiles = new Set();
+  placed.forEach((p) => {
+    const b = BUILDINGS[p.buildingId];
+    const size = b?.size || 1;
+    for (let dx = 0; dx < size; dx++) {
+      for (let dy = 0; dy < size; dy++) {
+        coveredTiles.add(`${p.x + dx}-${p.y + dy}`);
+      }
+    }
+  });
+
+  return Array.from({ length: GRID_SIZE }).map((_, x) =>
+    Array.from({ length: GRID_SIZE }).map((_, y) => {
+      const isWall =
+        x === 0 || x === GRID_SIZE - 1 ||
+        y === 0 || y === GRID_SIZE - 1;
+      const hasBuilding = coveredTiles.has(`${x}-${y}`);
+      return (
+        <IsoTile
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          isWall={isWall}
+          hasBuilding={hasBuilding}
+        />
+      );
+    })
+  );
+})()}
 
           {[...placed]
             .sort((a, b) => (a.x + a.y) - (b.x + b.y))
@@ -610,7 +659,12 @@ const handleTouchEnd = (e) => {
   onMouseUp={handleMouseUp}
   onTouchStart={(e) => {
     e.stopPropagation();
+    e.preventDefault();
     startDragFromInventory(id);
+  }}
+  onTouchMove={(e) => {
+    // 手指移动时，告诉 viewport 处理
+    e.preventDefault();
   }}
   onTouchEnd={handleTouchEnd}
 >
