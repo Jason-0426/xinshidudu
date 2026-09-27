@@ -9264,6 +9264,8 @@ body {
   }
 
   /* App 容器铺满 */
+  @media (max-width: 899px) {
+  /* App 容器：从屏幕最顶部开始 */
   .app-viewport {
     height: 100vh !important;
     height: 100dvh !important;
@@ -9274,15 +9276,81 @@ body {
     flex-direction: column !important;
     overflow: hidden !important;
     background: var(--bg-base) !important;
+    /* 关键：让内容从屏幕顶部开始 */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
   }
 
-  /* 顶栏：用 padding-top 填满状态栏区域 */
+  /* 顶栏：自己加 padding，覆盖状态栏 */
   .top-bar {
-    padding-top: 30px !important;      /* ← 关键 */
-    padding-bottom: 12px !important;
+  padding-top: 40px !important;
+  padding-bottom: 12px !important;
+  flex-shrink: 0 !important;
+  background: var(--glass-bg-nav) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  /* 关键：背景延伸到屏幕顶部 */
+  margin-top: -40px !important;
+  padding-top: 40px !important;
+}
+}
+
+  /* 中间区域 */
+  .main-area {
+    flex: 1 !important;
+    min-height: 0 !important;
+    padding: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 底部控制 */
+  .home-controls {
+    flex-shrink: 0 !important;
+    padding: 0 12px 12px !important;
+    gap: 8px !important;
+  }
+}
+/* ============================================================
+   手机版：状态栏修复 v3（可靠版）
+   ============================================================ */
+@media (max-width: 899px) {
+
+  /* 删掉旧的 body::after */
+  body::after {
+    display: none !important;
+  }
+
+  /* App 容器：铺满屏幕，从最顶部开始 */
+  .app-viewport {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: var(--bg-base) !important;
+  }
+
+  /* 顶栏：内部加 padding 填满状态栏，背景延伸到屏幕顶 */
+  .top-bar {
+    padding: 40px 16px 12px 16px !important;    /* 上 40px，其他 16/12 */
     flex-shrink: 0 !important;
     background: var(--glass-bg-nav) !important;
+    backdrop-filter: blur(40px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
     border-bottom: 1px solid var(--glass-border) !important;
+    box-sizing: border-box !important;
   }
 
   /* 中间区域 */
