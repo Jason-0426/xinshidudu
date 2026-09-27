@@ -9040,5 +9040,40 @@ body {
   overflow: hidden !important;
 }
 /* ============================================================
+   手机状态栏缝隙修复（强制版）
+   ============================================================ */
+@media (max-width: 899px) {
+  /* 背景色延伸到屏幕最顶部 */
+  html,
+  body {
+    background: var(--bg-base) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 用 fixed 色块盖住状态栏区域 */
+  body::after {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: max(env(safe-area-inset-top, 0), 30px) !important;
+    background: var(--bg-base) !important;
+    z-index: 99999 !important;
+    pointer-events: none !important;
+  }
+
+  /* App 内容往下推 */
+  .app-viewport {
+    padding-top: max(env(safe-area-inset-top, 0), 30px) !important;
+  }
+
+  /* 顶栏额外 padding */
+  .top-bar {
+    padding-top: 12px !important;
+  }
+}
+/* ============================================================
    END
    ============================================================ */
