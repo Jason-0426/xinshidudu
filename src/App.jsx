@@ -168,11 +168,12 @@ const FocusView = memo(function FocusView({
       );
 
       if (state.mode === 'stopwatch') {
-        return {
-          timeLeft: duration * 60,
-          elapsed: Math.max(0, Math.min(totalElapsedSec, 3 * 60 * 60)),
-        };
-      } else {
+  return {
+    timeLeft: 0,   // 正计时不用 timeLeft
+    elapsed: Math.max(0, Math.min(totalElapsedSec, 3 * 60 * 60)),
+  };
+}
+      else {
         const totalSec = state.duration * 60;
         const left = Math.max(0, totalSec - totalElapsedSec);
         return {
@@ -302,10 +303,22 @@ const FocusView = memo(function FocusView({
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
-  const displayTime = focusMode === 'stopwatch' ? formatTime(elapsed) : formatTime(timeLeft);
+  // 用 localStorage 的 mode（防止 props 不同步）
+const realMode = (() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (saved) {
+      const state = JSON.parse(saved);
+      return state.mode || focusMode;
+    }
+  } catch {}
+  return focusMode;
+})();
+
+const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(timeLeft);
 
   const progressPercent =
-    focusMode === 'stopwatch'
+    realMode === 'stopwatch'
       ? Math.min((elapsed / (3 * 60 * 60)) * 100, 100)
       : Math.min(((realDuration * 60 - timeLeft) / (realDuration * 60)) * 100, 100);
 
@@ -462,7 +475,16 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [weather, setWeather] = useState('clear');
 
-  const [focusMode, setFocusMode] = useState('countdown');
+  const [focusMode, setFocusMode] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_focus');
+    if (saved) {
+      const state = JSON.parse(saved);
+      return state.mode || 'countdown';
+    }
+  } catch {}
+  return 'countdown';
+});
   const [duration, setDuration] = useState(25);
   const [breakDuration, setBreakDuration] = useState(5);
 
