@@ -352,7 +352,13 @@ const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(
                 <button
                   key={key}
                   className="weather-item"
-                  onClick={() => { setWeather(key); setWeatherMenuOpen(false); }}
+                  onClick={() => {
+  setWeather(key);
+  try {
+    localStorage.setItem('xinshidudu_weather', key);
+  } catch {}
+  setWeatherMenuOpen(false);
+}}
                 >
                   <span>{w.icon}</span>
                   <span>{w.name}</span>
@@ -473,7 +479,13 @@ export default function App() {
 
   const [view, setView] = useState('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [weather, setWeather] = useState('clear');
+  const [weather, setWeather] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_weather');
+    if (saved) return saved;
+  } catch {}
+  return 'clear';
+});
 
   const [focusMode, setFocusMode] = useState(() => {
   try {
@@ -485,8 +497,21 @@ export default function App() {
   } catch {}
   return 'countdown';
 });
-  const [duration, setDuration] = useState(25);
-  const [breakDuration, setBreakDuration] = useState(5);
+const [duration, setDuration] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_duration');
+    if (saved) return parseInt(saved, 10) || 25;
+  } catch {}
+  return 25;
+});
+
+const [breakDuration, setBreakDuration] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_break');
+    if (saved) return parseInt(saved, 10) || 5;
+  } catch {}
+  return 5;
+});
 
   const [customModal, setCustomModal] = useState(null);
   const [customValue, setCustomValue] = useState('');
@@ -506,7 +531,16 @@ export default function App() {
   };
 
   const [audioOn, setAudioOn] = useState(false);
-  const [sound, setSound] = useState(SOUNDS[0]);
+  const [sound, setSound] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_sound_id');
+    if (saved) {
+      const found = SOUNDS.find((s) => s.id === saved);
+      if (found) return found;
+    }
+  } catch {}
+  return SOUNDS[0];
+});
   const audioRef = useRef(null);
 
   const [gold, setGold] = useState(328);
@@ -591,6 +625,31 @@ export default function App() {
   }, [audioOn]);
 
   // ---------- 检查登录状态 ----------
+// 保存用户偏好
+useEffect(() => {
+  try {
+    localStorage.setItem('xinshidudu_weather', weather);
+  } catch {}
+}, [weather]);
+
+useEffect(() => {
+  try {
+    localStorage.setItem('xinshidudu_sound_id', sound.id);
+  } catch {}
+}, [sound]);
+
+useEffect(() => {
+  try {
+    localStorage.setItem('xinshidudu_duration', String(duration));
+  } catch {}
+}, [duration]);
+
+useEffect(() => {
+  try {
+    localStorage.setItem('xinshidudu_break', String(breakDuration));
+  } catch {}
+}, [breakDuration]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
@@ -1491,7 +1550,12 @@ useEffect(() => {
           duration={duration}
           selectedBuilding={selectedBuilding}
           weather={weather}
-          setWeather={setWeather}
+  setWeather={(w) => {
+    setWeather(w);
+    try {
+      localStorage.setItem('xinshidudu_weather', w);
+    } catch {}
+  }}
           onFinish={finishFocus}
           onStop={stopFocus}
           sound={sound}
