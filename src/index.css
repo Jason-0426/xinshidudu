@@ -9371,5 +9371,79 @@ body {
   }
 }
 /* ============================================================
+   手机版顶栏：状态栏留白（强制）
+   ============================================================ */
+@media (max-width: 899px) {
+
+  .top-bar {
+    padding-top: 48px !important;
+    padding-bottom: 12px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    min-height: auto !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    background: var(--glass-bg-nav) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+  }
+
+  /* 顶栏内容：不挤压 */
+  .top-bar > * {
+    flex-shrink: 0 !important;
+  }
+
+  /* 玩家卡：允许缩小 */
+  .player-card {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .player-name {
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .player-sub {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* 头像缩小 */
+  .player-avatar-img {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  /* 金币卡缩小 */
+  .gold-card {
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+  }
+
+  .gold-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* 主题按钮缩小 */
+  .theme-toggle-btn.mobile {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 16px !important;
+  }
+
+  /* 开发者按钮缩小 */
+  .dev-toggle-btn.mobile {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 14px !important;
+  }
+}
+/* ============================================================
    END
    ============================================================ */
