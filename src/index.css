@@ -8811,6 +8811,7 @@ body > * {
   top: 0;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  animation-fill-mode: both;   /* ← 加这行 */
   will-change: transform, opacity;
 }
 
@@ -8956,6 +8957,87 @@ body {
   .drawer {
     padding-top: calc(60px + env(safe-area-inset-top, 0)) !important;
   }
+}
+
+/* ============================================================
+   手机顶部缝隙修复
+   ============================================================ */
+html,
+body {
+  background: var(--bg-base) !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+}
+
+/* 手机状态栏区域也填上主题色 */
+@media (max-width: 899px) {
+  html {
+    background: var(--bg-base) !important;
+  }
+  
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 20px);
+    background: var(--bg-base);
+    z-index: 99999;
+    pointer-events: none;
+  }
+}
+
+/* ============================================================
+   手机顶部缝隙 + 粒子初始位置修复
+   ============================================================ */
+
+html,
+body {
+  background: var(--bg-base) !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+}
+
+/* 手机状态栏区域填色（消除顶部缝隙） */
+@media (max-width: 899px) {
+  html {
+    background: var(--bg-base) !important;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 20px);
+    background: var(--bg-base);
+    z-index: 99999;
+    pointer-events: none;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top, 0) !important;
+  }
+}
+
+/* 粒子：delay 期间保持起点（避免堆在顶部） */
+.theme-particles .particle {
+  animation-fill-mode: both !important;
+}
+
+/* 粒子层覆盖整个视口（包括状态栏） */
+.theme-particles {
+  position: fixed !important;
+  top: calc(-1 * env(safe-area-inset-top, 0)) !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh + env(safe-area-inset-top, 0)) !important;
+  height: calc(100dvh + env(safe-area-inset-top, 0)) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  overflow: hidden !important;
 }
 /* ============================================================
    END
