@@ -188,6 +188,7 @@ const getInitialState = () => {
 const initial = getInitialState();
 const [timeLeft, setTimeLeft] = useState(initial.timeLeft);
 const [elapsed, setElapsed] = useState(initial.elapsed);
+
 // 切回前台时，重新计算剩余时间
 useEffect(() => {
   const handleVisibilityChange = () => {
@@ -213,39 +214,42 @@ useEffect(() => {
         console.error('visibilitychange 恢复失败：', e);
       }
     }
-    
-      // 兜底：每 5 秒检查一次时间是否对
-  useEffect(() => {
-    if (isPaused) return;
-
-    const check = () => {
-      try {
-        const saved = localStorage.getItem('xinshidudu_focus');
-        if (!saved) return;
-        const state = JSON.parse(saved);
-        const now = Date.now();
-        const totalElapsedSec = Math.floor(
-          (now - state.startedAt - state.totalPausedMs) / 1000
-        );
-
-        if (state.mode !== 'stopwatch') {
-          const totalSec = state.duration * 60;
-          const left = Math.max(0, totalSec - totalElapsedSec);
-          setTimeLeft((prev) => {
-            // 只在大幅偏差时更新（避免抖动）
-            if (Math.abs(prev - left) > 3) return left;
-            return prev;
-          });
-        }
-      } catch {}
-    };
-
-    const timer = setInterval(check, 5000);
-    return () => clearInterval(timer);
-  }, [isPaused]);
-
   };
 
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, [isPaused]);
+
+// 兜底：每 5 秒检查一次时间是否对
+useEffect(() => {
+  if (isPaused) return;
+
+  const check = () => {
+    try {
+      const saved = localStorage.getItem('xinshidudu_focus');
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      const now = Date.now();
+      const totalElapsedSec = Math.floor(
+        (now - state.startedAt - state.totalPausedMs) / 1000
+      );
+
+      if (state.mode !== 'stopwatch') {
+        const totalSec = state.duration * 60;
+        const left = Math.max(0, totalSec - totalElapsedSec);
+        setTimeLeft((prev) => {
+          if (Math.abs(prev - left) > 3) return left;
+          return prev;
+        });
+      }
+    } catch {}
+  };
+
+  const timer = setInterval(check, 5000);
+  return () => clearInterval(timer);
+}, [isPaused]);
   document.addEventListener('visibilitychange', handleVisibilityChange);
   return () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -498,7 +502,7 @@ const [realDuration, setRealDuration] = useState(() => {
       </div>
     </div>
   );
-});
+  
 // ============================================================
 // 主 App
 // ============================================================
