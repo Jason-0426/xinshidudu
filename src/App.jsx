@@ -387,13 +387,13 @@ const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(
       : Math.min(((realDuration * 60 - timeLeft) / (realDuration * 60)) * 100, 100);
 
   const handleManualFinish = () => {
-    const minutes = Math.floor(elapsed / 60);
-    if (minutes < 1) {
-      onStop();
-      return;
-    }
-    onFinish(minutes);
-  };
+  const minutes = Math.floor(elapsed / 60);
+  if (minutes < 25) {
+    alert('专注不足 25 分钟，无法获得奖励。\n继续加油！');
+    return;
+  }
+  onFinish(minutes);
+};
 
   return (
     <div className="focus-view">
@@ -662,6 +662,7 @@ const [breakDuration, setBreakDuration] = useState(() => {
   const [rewardOpen, setRewardOpen] = useState(false);
   const [pendingCoins, setPendingCoins] = useState(0);
   const [pendingMinutes, setPendingMinutes] = useState(0);
+  const [pendingBuildingCount, setPendingBuildingCount] = useState(1);
 
   const [castleOpen, setCastleOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
@@ -790,24 +791,38 @@ useEffect(() => {
 
   // ---------- 自动同步到 Supabase ----------
   useEffect(() => {
-    if (!user || !dataLoaded) return;
-    if (!profileLoadedRef.current) return;
+  if (!user || !dataLoaded) return;
+  if (!profileLoadedRef.current) return;
 
-    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = setTimeout(async () => {
-      const { error } = await supabase
-        .from('user_data')
-        .update({ gold, inventory, placed, unlocked, profile })
-        .eq('user_id', user.id);
+  if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+  syncTimerRef.current = setTimeout(async () => {
+    // 同步前先读数据库的 vip（不让前端覆盖）
+    const { data: current } = await supabase
+      .from('user_data')
+      .select('profile')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-      if (error) console.warn('同步失败：', error);
-    }, 800);
+    const dbVip = current?.profile?.vip;
 
-    return () => {
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    // 同步时，vip 用数据库的
+    const profileToSync = {
+      ...profile,
+      vip: dbVip || profile.vip,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dataLoaded, gold, inventory, placed, unlocked, profile]);
+
+    const { error } = await supabase
+      .from('user_data')
+      .update({ gold, inventory, placed, unlocked, profile: profileToSync })
+      .eq('user_id', user.id);
+
+    if (error) console.warn('同步失败：', error);
+  }, 800);
+
+  return () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+  };
+}, [user, dataLoaded, gold, inventory, placed, unlocked, profile]);
 
   // ---------- 每日任务刷新 + 积分月重置 ----------
   useEffect(() => {
@@ -1111,25 +1126,25 @@ useEffect(() => {
   };
 
   const keepBuilding = () => {
-    const id = selectedBuilding.id;
-    setInventory((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1,
-    }));
-    setRewardOpen(false);
-    setGold((g) => g + pendingCoins);
-    setResultData({ minutes: pendingMinutes, coins: pendingCoins });
-    setResultOpen(true);
-  };
+  const id = selectedBuilding.id;
+  setInventory((prev) => ({
+    ...prev,
+    [id]: (prev[id] || 0) + pendingBuildingCount,
+  }));
+  setRewardOpen(false);
+  setGold((g) => g + pendingCoins);
+  setResultData({ minutes: pendingMinutes, coins: pendingCoins });
+  setResultOpen(true);
+};
 
   const convertToCoins = () => {
-    const rarity = selectedBuilding.rarity;
-    const extraCoins = RARITY_COIN[rarity] || 10;
-    setRewardOpen(false);
-    setGold((g) => g + pendingCoins + extraCoins);
-    setResultData({ minutes: pendingMinutes, coins: pendingCoins + extraCoins });
-    setResultOpen(true);
-  };
+  const rarity = selectedBuilding.rarity;
+  const extraCoins = (RARITY_COIN[rarity] || 10) * pendingBuildingCount;
+  setRewardOpen(false);
+  setGold((g) => g + pendingCoins + extraCoins);
+  setResultData({ minutes: pendingMinutes, coins: pendingCoins + extraCoins });
+  setResultOpen(true);
+};
 
   const finishFocus = (minutes) => {
     localStorage.removeItem('xinshidudu_focus');  // ← 加这行
@@ -1213,10 +1228,18 @@ useEffect(() => {
       : baseCoins;
 
     setPendingCoins(coins);
-    setPendingMinutes(minutes);
-    setRewardOpen(true);
-    setView('home');
-    setAudioOn(false);
+setPendingMinutes(minutes);
+
+// 计算建筑数：倒计时每满 1 小时 2 个，其他 1 个
+let buildingCount = 1;
+if (focusMode === 'countdown' && minutes >= 60) {
+  buildingCount = Math.floor(minutes / 60) * 2;
+}
+setPendingBuildingCount(buildingCount);
+
+setRewardOpen(true);
+setView('home');
+setAudioOn(false);
 
     setTimeout(() => {
       checkAndUnlockAchievements({
@@ -1722,20 +1745,26 @@ useEffect(() => {
       <div className={`picker-backdrop ${resultOpen ? 'active' : ''}`} onClick={() => setResultOpen(false)} />
 
       <div className={`reward-modal ${rewardOpen ? 'active' : ''}`}>
-        <div className="reward-icon">
-          <img src={selectedBuilding.imgs[0]} alt={selectedBuilding.name} />
-        </div>
-        <div className="reward-title">🎁 获得建筑</div>
-        <div className="reward-name">{selectedBuilding.name} ×1</div>
-        <div className={`reward-rarity rarity-tag-${selectedBuilding.rarity}`}>{RARITY_LABEL[selectedBuilding.rarity]}</div>
-        <div className="reward-actions">
-          <button className="reward-btn keep" onClick={keepBuilding}>📦 保留 ×1</button>
-          <button className="reward-btn convert" onClick={convertToCoins}>
-            💰 转 {RARITY_COIN[selectedBuilding.rarity] || 10}
-            <img src={asset('coin.png')} alt="金币" className="gold-icon" />
-          </button>
-        </div>
-      </div>
+  <div className="reward-icon">
+    <img src={selectedBuilding.imgs[0]} alt={selectedBuilding.name} />
+  </div>
+  <div className="reward-title">🎁 获得建筑</div>
+  <div className="reward-name">
+    {selectedBuilding.name} ×{pendingBuildingCount}
+  </div>
+  <div className={`reward-rarity rarity-tag-${selectedBuilding.rarity}`}>
+    {RARITY_LABEL[selectedBuilding.rarity]}
+  </div>
+  <div className="reward-actions">
+    <button className="reward-btn keep" onClick={keepBuilding}>
+      📦 保留 ×{pendingBuildingCount}
+    </button>
+    <button className="reward-btn convert" onClick={convertToCoins}>
+      💰 转 {(RARITY_COIN[selectedBuilding.rarity] || 10) * pendingBuildingCount}
+      <img src={asset('coin.png')} alt="金币" className="gold-icon" />
+    </button>
+  </div>
+</div>
 
       <div className={`result-modal ${resultOpen ? 'active' : ''}`}>
         <div className="result-icon">🎉</div>
