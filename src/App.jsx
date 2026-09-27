@@ -188,6 +188,38 @@ const getInitialState = () => {
 const initial = getInitialState();
 const [timeLeft, setTimeLeft] = useState(initial.timeLeft);
 const [elapsed, setElapsed] = useState(initial.elapsed);
+// 切回前台时，重新计算剩余时间
+useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && !isPaused) {
+      try {
+        const saved = localStorage.getItem('xinshidudu_focus');
+        if (saved) {
+          const state = JSON.parse(saved);
+          const now = Date.now();
+          const totalElapsedSec = Math.floor(
+            (now - state.startedAt - state.totalPausedMs) / 1000
+          );
+
+          if (state.mode === 'stopwatch') {
+            setElapsed(Math.min(totalElapsedSec, 3 * 60 * 60));
+          } else {
+            const totalSec = state.duration * 60;
+            const left = Math.max(0, totalSec - totalElapsedSec);
+            setTimeLeft(left);
+          }
+        }
+      } catch (e) {
+        console.error('visibilitychange 恢复失败：', e);
+      }
+    }
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, [isPaused]);
 // 从 localStorage 恢复真实的总时长
 const [realDuration, setRealDuration] = useState(() => {
   try {
