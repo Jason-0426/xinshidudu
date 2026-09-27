@@ -230,6 +230,162 @@ export default function CastlePage({
     setHoverTile(null);
   };
 
+  // ---------- 触摸事件 ----------
+const touchStateRef = useRef({
+  mode: null,         // 'pan' | 'pinch' | 'drag-building'
+  startX: 0,
+  startY: 0,
+  startOffsetX: 0,
+  startOffsetY: 0,
+  startDistance: 0,
+  startScale: 1,
+  startMidX: 0,
+  startMidY: 0,
+});
+
+const handleTouchStart = (e) => {
+  // 从仓库拖建筑
+  if (draggingRef.current) {
+    // 已经在拖建筑了，不动
+    return;
+  }
+
+  if (e.touches.length === 2) {
+    // 双指：缩放
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const midX = (t1.clientX + t2.clientX) / 2;
+    const midY = (t1.clientY + t2.clientY) / 2;
+
+    touchStateRef.current = {
+      ...touchStateRef.current,
+      mode: 'pinch',
+      startDistance: distance,
+      startScale: scale,
+      startMidX: midX,
+      startMidY: midY,
+      startOffsetX: offset.x,
+      startOffsetY: offset.y,
+    };
+  } else if (e.touches.length === 1) {
+    // 单指：拖动地图
+    const t = e.touches[0];
+    touchStateRef.current = {
+      ...touchStateRef.current,
+      mode: 'pan',
+      startX: t.clientX,
+      startY: t.clientY,
+      startOffsetX: offset.x,
+      startOffsetY: offset.y,
+    };
+  }
+};
+
+const handleTouchMove = (e) => {
+  e.preventDefault();
+
+  // 从仓库拖建筑
+  if (draggingRef.current && viewportRef.current) {
+    const rect = viewportRef.current.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = (t.clientX - rect.left - offset.x) / scale;
+    const my = (t.clientY - rect.top - offset.y) / scale;
+    const tile = screenToIso(mx, my);
+    if (tile && tile.x >= 0 && tile.x < GRID_SIZE && tile.y >= 0 && tile.y < GRID_SIZE) {
+      setHoverTile(tile);
+    } else {
+      setHoverTile(null);
+    }
+    return;
+  }
+
+  const state = touchStateRef.current;
+
+  if (state.mode === 'pinch' && e.touches.length === 2) {
+    // 缩放
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const factor = distance / state.startDistance;
+    const newScale = Math.min(Math.max(state.startScale * factor, MIN_SCALE), MAX_SCALE);
+
+    // 以双指中点为中心缩放
+    if (viewportRef.current) {
+      const rect = viewportRef.current.getBoundingClientRect();
+      const midX = state.startMidX - rect.left;
+      const midY = state.startMidY - rect.top;
+
+      const worldX = (midX - state.startOffsetX) / state.startScale;
+      const worldY = (midY - state.startOffsetY) / state.startScale;
+
+      setScale(newScale);
+      setOffset({
+        x: midX - worldX * newScale,
+        y: midY - worldY * newScale,
+      });
+    }
+  } else if (state.mode === 'pan' && e.touches.length === 1) {
+    // 拖动地图
+    const t = e.touches[0];
+    const dx = t.clientX - state.startX;
+    const dy = t.clientY - state.startY;
+    setOffset({
+      x: state.startOffsetX + dx,
+      y: state.startOffsetY + dy,
+    });
+  }
+};
+
+const handleTouchEnd = (e) => {
+  const state = touchStateRef.current;
+
+  // 从仓库拖建筑结束
+  if (draggingRef.current && hoverTile) {
+    const buildingId = draggingRef.current;
+    const occupied = placed.some((p) => p.x === hoverTile.x && p.y === hoverTile.y);
+    if (!occupied) {
+      setPlaced((prev) => [...prev, { x: hoverTile.x, y: hoverTile.y, buildingId }]);
+      setInventory((prev) => ({
+        ...prev,
+        [buildingId]: Math.max(0, (prev[buildingId] || 0) - 1),
+      }));
+    }
+    draggingRef.current = null;
+    setHoverTile(null);
+  }
+
+  // 触摸结束 → 重置状态
+  if (e.touches.length === 0) {
+    touchStateRef.current = {
+      mode: null,
+      startX: 0,
+      startY: 0,
+      startOffsetX: 0,
+      startOffsetY: 0,
+      startDistance: 0,
+      startScale: 1,
+      startMidX: 0,
+      startMidY: 0,
+    };
+  } else if (e.touches.length === 1 && state.mode === 'pinch') {
+    // 双指 → 单指，切换成拖动
+    const t = e.touches[0];
+    touchStateRef.current = {
+      ...state,
+      mode: 'pan',
+      startX: t.clientX,
+      startY: t.clientY,
+      startOffsetX: offset.x,
+      startOffsetY: offset.y,
+    };
+  }
+};
+
   const startDragFromInventory = (buildingId) => {
     if ((inventory[buildingId] || 0) <= 0) return;
     draggingRef.current = buildingId;
@@ -307,14 +463,17 @@ export default function CastlePage({
       </div>
 
       <div
-        className="castle-viewport"
-        ref={viewportRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{ cursor: dragging === '__canvas__' ? 'grabbing' : 'grab' }}
-      >
+  className="castle-viewport"
+  ref={viewportRef}
+  onMouseDown={handleMouseDown}
+  onMouseMove={handleMouseMove}
+  onMouseUp={handleMouseUp}
+  onMouseLeave={handleMouseUp}
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}
+  style={{ cursor: dragging === '__canvas__' ? 'grabbing' : 'grab' }}
+>
         <div
           className="castle-world"
           style={{
@@ -442,14 +601,19 @@ export default function CastlePage({
               const count = inventory[id] || 0;
               return (
                 <div
-                  key={id}
-                  className={`inventory-item ${dragging === id ? 'dragging' : ''}`}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    startDragFromInventory(id);
-                  }}
-                  onMouseUp={handleMouseUp}
-                >
+  key={id}
+  className={`inventory-item ${dragging === id ? 'dragging' : ''}`}
+  onMouseDown={(e) => {
+    e.stopPropagation();
+    startDragFromInventory(id);
+  }}
+  onMouseUp={handleMouseUp}
+  onTouchStart={(e) => {
+    e.stopPropagation();
+    startDragFromInventory(id);
+  }}
+  onTouchEnd={handleTouchEnd}
+>
                   <div className="inventory-thumb">
                     <img src={b.imgs[0]} alt={b.name} />
                   </div>
