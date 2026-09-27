@@ -17,6 +17,8 @@ export default function ActivitiesPage({
   setProfile,
   gold,
   setGold,
+  inventory,
+  setInventory,
 }) {
   // 分类活动
   const liveActivities = ACTIVITIES.filter((a) => isActivityLive(a));
@@ -58,6 +60,7 @@ export default function ActivitiesPage({
     const state = getUserActivityState(activity, profile);
     if (state.allDoneClaimed) return;
 
+    // 1. 标记已领取 + 加经验
     setProfile((p) => {
       const activities = { ...(p.activities || {}) };
       const actState = activities[activity.id] || getDefaultActivityState();
@@ -72,7 +75,25 @@ export default function ActivitiesPage({
       };
     });
 
+    // 2. 加金币
     setGold((g) => g + (activity.allDoneReward.coins || 0));
+
+    // 3. 加建筑到仓库
+    const buildingId = activity.allDoneReward?.building?.id;
+    console.log('🔍 检查:', { buildingId, hasSetInventory: !!setInventory });
+
+    if (buildingId && setInventory) {
+      setInventory((prev) => {
+        const next = {
+          ...prev,
+          [buildingId]: (prev[buildingId] || 0) + 1,
+        };
+        console.log('✅ 建筑已加:', buildingId, '数量:', next[buildingId]);
+        return next;
+      });
+    } else {
+      console.log('❌ 无法加建筑:', { buildingId, hasSetInventory: !!setInventory });
+    }
   };
 
   return (
@@ -92,9 +113,7 @@ export default function ActivitiesPage({
       </div>
 
       <div className="activities-content">
-        {/* ============================================================
-            进行中的活动
-            ============================================================ */}
+        {/* 进行中的活动 */}
         {liveActivities.length > 0 && (
           <>
             <div className="activities-section-title">🔥 进行中</div>
@@ -111,9 +130,7 @@ export default function ActivitiesPage({
           </>
         )}
 
-        {/* ============================================================
-            即将开始
-            ============================================================ */}
+        {/* 即将开始 */}
         {upcomingActivities.length > 0 && (
           <>
             <div className="activities-section-title">🕐 即将开始</div>
@@ -130,9 +147,7 @@ export default function ActivitiesPage({
           </>
         )}
 
-        {/* ============================================================
-            已结束
-            ============================================================ */}
+        {/* 已结束 */}
         {endedActivities.length > 0 && (
           <>
             <div className="activities-section-title">✅ 已结束</div>

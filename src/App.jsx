@@ -1722,14 +1722,14 @@ setAudioOn(false);
         </div>
         <div className="picker-list">
           {BUILDINGS.map((b) => {
-            const isUnlocked = unlocked.includes(b.id);
-            return (
-              <button
-                key={b.id}
-                className={`picker-item ${selectedBuilding.id === b.id ? 'selected' : ''} rarity-${b.rarity} ${!isUnlocked ? 'locked' : ''}`}
-                onClick={() => isUnlocked && pickBuilding(b)}
-                disabled={!isUnlocked}
-              >
+  const isUnlocked = unlocked.includes(b.id) || (inventory[b.id] || 0) > 0;
+  return (
+    <button
+      key={b.id}
+      className={`picker-item ${selectedBuilding.id === b.id ? 'selected' : ''} rarity-${b.rarity} ${!isUnlocked ? 'locked' : ''}`}
+      onClick={() => isUnlocked && pickBuilding(b)}
+      disabled={!isUnlocked}
+    >
                 <div className={`picker-thumb rarity-${b.rarity}`}>
                   <img src={b.imgs[0]} alt={b.name} />
                   {!isUnlocked && <div className="lock-badge">🔒</div>}
@@ -1900,13 +1900,15 @@ setAudioOn(false);
           活动页
           ============================================================ */}
       <ActivitiesPage
-        open={activitiesOpen}
-        onClose={() => { setActivitiesOpen(false); setActiveMenu(null); }}
-        profile={profile}
-        setProfile={setProfile}
-        gold={gold}
-        setGold={setGold}
-      />
+  open={activitiesOpen}
+  onClose={() => { setActivitiesOpen(false); setActiveMenu(null); }}
+  profile={profile}
+  setProfile={setProfile}
+  gold={gold}
+  setGold={setGold}
+  inventory={inventory}
+  setInventory={setInventory}
+/>
 
       {/* ============================================================
           VIP 页
