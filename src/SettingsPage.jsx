@@ -43,6 +43,8 @@ export default function SettingsPage({
   theme = 'midnight',
   setTheme,
   themes = [],
+  particlesEnabled = true,
+  setParticlesEnabled,
 }) {
   const [settings, setSettings] = useState(() => loadSettings());
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -261,6 +263,22 @@ export default function SettingsPage({
       ))}
     </div>
   </div>
+
+{/* 主题粒子效果 */}
+<div className="settings-row inline">
+  <div>
+    <div className="settings-label-simple">主题粒子效果</div>
+    <div className="settings-hint" style={{ textAlign: 'left', marginTop: 4 }}>
+      关闭后只保留主题颜色
+    </div>
+  </div>
+  <button
+    className={`toggle ${particlesEnabled ? 'on' : ''}`}
+    onClick={() => setParticlesEnabled && setParticlesEnabled(!particlesEnabled)}
+  >
+    <span className="toggle-knob" />
+  </button>
+</div>
 
   {/* 动画效果 */}
   <div className="settings-row inline">

@@ -579,6 +579,13 @@ export default function App() {
   } catch {}
   return 'midnight';
 });
+const [particlesEnabled, setParticlesEnabled] = useState(() => {
+  try {
+    const saved = localStorage.getItem('xinshidudu_particles');
+    if (saved !== null) return saved === 'true';
+  } catch {}
+  return true; // 默认开启
+});
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [weather, setWeather] = useState(() => {
   try {
@@ -769,6 +776,12 @@ useEffect(() => {
     localStorage.setItem('xinshidudu_break', String(breakDuration));
   } catch {}
 }, [breakDuration]);
+
+useEffect(() => {
+  try {
+    localStorage.setItem('xinshidudu_particles', String(particlesEnabled));
+  } catch {}
+}, [particlesEnabled]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -1487,7 +1500,7 @@ setAudioOn(false);
 
   return (
     <>
-    <ThemeParticles theme={theme} />
+    {particlesEnabled && <ThemeParticles theme={theme} />}
       {/* ============================================================
           电脑版主页
           ============================================================ */}
@@ -1916,8 +1929,10 @@ setAudioOn(false);
   theme={theme}
   setTheme={setTheme}
   themes={THEMES}
+  particlesEnabled={particlesEnabled}
+  setParticlesEnabled={setParticlesEnabled}
   onClearData={() => {
-  setGold(328);
+  setGold(100);
   setInventory(INITIAL_INVENTORY);
   setUnlocked(['house']);
   setPlaced([]);
