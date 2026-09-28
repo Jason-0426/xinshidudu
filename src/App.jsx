@@ -401,10 +401,14 @@ const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(
 
   const handleManualFinish = () => {
   const minutes = Math.floor(elapsed / 60);
-  if (minutes < 25) {
-    alert('专注不足 25 分钟，无法获得奖励。\n继续加油！');
+  
+  if (minutes < 15) {
+    // 15 分钟内 → 没奖励
+    alert(`本次专注 ${minutes} 分钟。\n专注不足 15 分钟，无法获得奖励。`);
+    onStop();  // 直接结束，不给奖励
     return;
   }
+  
   onFinish(minutes);
 };
 
@@ -527,28 +531,14 @@ const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(
   </button>
 
   {focusMode === 'stopwatch' ? (
-    <>
-      {Math.floor(elapsed / 60) < 25 ? (
-        <button
-          className="giveup-btn disabled"
-          onClick={() => {
-            const remaining = 25 - Math.floor(elapsed / 60);
-            alert(`专注不足 25 分钟，无法放弃。\n还需要专注 ${remaining} 分钟。`);
-          }}
-        >
-          🔒 专注中（还需 {25 - Math.floor(elapsed / 60)} 分钟）
-        </button>
-      ) : (
-        <button className="giveup-btn" onClick={handleManualFinish}>
-          ✓ 结束并结算
-        </button>
-      )}
-    </>
-  ) : (
-    <button className="giveup-btn" onClick={onStop}>
-      ✕ 放弃
-    </button>
-  )}
+  <button className="giveup-btn" onClick={handleManualFinish}>
+    ✓ 结束并结算
+  </button>
+) : (
+  <button className="giveup-btn" onClick={onStop}>
+    ✕ 放弃
+  </button>
+)}
 </div>
       </div>
     </div>
