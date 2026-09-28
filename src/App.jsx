@@ -641,7 +641,7 @@ const [breakDuration, setBreakDuration] = useState(() => {
 });
   const audioRef = useRef(null);
 
-  const [gold, setGold] = useState(328);
+  const [gold, setGold] = useStat(100);
   const [selectedBuilding, setSelectedBuilding] = useState(() => {
   try {
     const savedId = localStorage.getItem('xinshidudu_selected_building');
@@ -1015,7 +1015,7 @@ useEffect(() => {
     setDataLoaded(false);
     setIsDev(false);
     setDevPanelOpen(false);
-    setGold(328);
+    setGold(100);
     setInventory(INITIAL_INVENTORY);
     setUnlocked(['house']);
     setPlaced([]);
@@ -1991,7 +1991,7 @@ setAudioOn(false);
           onResetAll={async () => {
             if (user) {
               await supabase.from('user_data').update({
-                gold: 328,
+                gold: 100,
                 inventory: INITIAL_INVENTORY,
                 placed: [],
                 unlocked: ['house'],
@@ -2020,7 +2020,7 @@ setAudioOn(false);
                 },
               }).eq('user_id', user.id);
             }
-            setGold(328);
+            setGold(100);
             setInventory(INITIAL_INVENTORY);
             setUnlocked(['house']);
             setPlaced([]);
