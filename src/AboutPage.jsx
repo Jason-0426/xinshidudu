@@ -185,10 +185,15 @@ export default function AboutPage({ open, onClose }) {
               <span className="about-link-label">📧 联系我们</span>
               <span className="about-link-arrow">›</span>
             </button>
-            <button className="about-link-item" onClick={() => openSub('feedback')}>
-              <span className="about-link-label">🐛 反馈问题</span>
-              <span className="about-link-arrow">›</span>
-            </button>
+            <button
+  className="about-link-item"
+  onClick={() => {
+    window.open('https://forms.gle/W6aWJL2nVXpXLSNC6', '_blank');
+  }}
+>
+  <span className="about-link-label">🐛 反馈问题</span>
+  <span className="about-link-arrow">›</span>
+</button>
           </div>
         </div>
 
