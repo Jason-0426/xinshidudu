@@ -51,6 +51,9 @@ const SOUNDS = [
   { id: 'campfire', name: '篝火', emoji: '🔥', file: 'sounds/campfire.mp3' },
   { id: 'wind',     name: '风声', emoji: '💨', file: 'sounds/wind.mp3' },
   { id: 'ocean',    name: '海浪', emoji: '🌊', file: 'sounds/ocean.mp3' },
+  { id: 'lofi-1',   name: 'Lo-Fi 音乐 1', emoji: '🎧', file: 'sounds/lofi-1.mp3' },
+  { id: 'lofi-2',   name: 'Lo-Fi 音乐 2', emoji: '🎧', file: 'sounds/lofi-2.mp3' },
+  { id: 'lofi-3',   name: 'Lo-Fi 音乐 3', emoji: '🎧', file: 'sounds/lofi-3.mp3' },
 ];
 
 // ============================================================
@@ -69,7 +72,7 @@ const asset = (path) => `${import.meta.env.BASE_URL}${path}`;
 
 // ---------- 辅助函数 ----------
 function computeLevel(exp) {
-  return Math.min(10, Math.floor((exp || 0) / 500) + 1);
+  return Math.min(10, Math.floor((exp || 0) / 7000) + 1);
 }
 
 function computeTitle(level) {
@@ -97,10 +100,20 @@ function computeStreak(profile) {
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   };
+  
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
+  const todayKey = dateKey(today);
+  const hasToday = records[todayKey] && records[todayKey] > 0;
+  
+  // 今天没专注 → 从昨天开始数
   const cursor = new Date(today);
+  if (!hasToday) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  
   while (true) {
     const k = dateKey(cursor);
     if (records[k] && records[k] > 0) {
@@ -509,20 +522,34 @@ const displayTime = realMode === 'stopwatch' ? formatTime(elapsed) : formatTime(
         </div>
 
         <div className="focus-actions">
-          <button className="pause-btn" onClick={() => setIsPaused((v) => !v)}>
-            {isPaused ? '▶ 继续' : '⏸ 暂停'}
-          </button>
+  <button className="pause-btn" onClick={() => setIsPaused((v) => !v)}>
+    {isPaused ? '▶ 继续' : '⏸ 暂停'}
+  </button>
 
-          {focusMode === 'stopwatch' ? (
-            <button className="giveup-btn" onClick={handleManualFinish}>
-              ✓ 结束并结算
-            </button>
-          ) : (
-            <button className="giveup-btn" onClick={onStop}>
-              ✕ 放弃
-            </button>
-          )}
-        </div>
+  {focusMode === 'stopwatch' ? (
+    <>
+      {Math.floor(elapsed / 60) < 25 ? (
+        <button
+          className="giveup-btn disabled"
+          onClick={() => {
+            const remaining = 25 - Math.floor(elapsed / 60);
+            alert(`专注不足 25 分钟，无法放弃。\n还需要专注 ${remaining} 分钟。`);
+          }}
+        >
+          🔒 专注中（还需 {25 - Math.floor(elapsed / 60)} 分钟）
+        </button>
+      ) : (
+        <button className="giveup-btn" onClick={handleManualFinish}>
+          ✓ 结束并结算
+        </button>
+      )}
+    </>
+  ) : (
+    <button className="giveup-btn" onClick={onStop}>
+      ✕ 放弃
+    </button>
+  )}
+</div>
       </div>
     </div>
   );
@@ -618,7 +645,16 @@ const [breakDuration, setBreakDuration] = useState(() => {
   const audioRef = useRef(null);
 
   const [gold, setGold] = useState(328);
-  const [selectedBuilding, setSelectedBuilding] = useState(DEFAULT_BUILDING);
+  const [selectedBuilding, setSelectedBuilding] = useState(() => {
+  try {
+    const savedId = localStorage.getItem('xinshidudu_selected_building');
+    if (savedId) {
+      const found = BUILDINGS.find((b) => b.id === savedId);
+      if (found) return found;
+    }
+  } catch {}
+  return DEFAULT_BUILDING;
+});
   const [buildingPickerOpen, setBuildingPickerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
@@ -674,6 +710,15 @@ const [breakDuration, setBreakDuration] = useState(() => {
   const [placed, setPlaced]       = useState([]);
 
   // ---------- 音频管理 ----------
+// 保存选中的建筑
+useEffect(() => {
+  try {
+    if (selectedBuilding?.id) {
+      localStorage.setItem('xinshidudu_selected_building', selectedBuilding.id);
+    }
+  } catch {}
+}, [selectedBuilding]);
+
   useEffect(() => {
     if (audioRef.current) {
       const wasPlaying = !audioRef.current.paused;
@@ -1045,7 +1090,7 @@ useEffect(() => {
       currentStreak = cs;
     }
 
-    const level = Math.min(10, Math.floor((profile.exp || 0) / 500) + 1);
+    const level = Math.min(10, Math.floor((profile.exp || 0) / 7000) + 1);
 
     return {
       totalSessions: profile.totalSessions || 0,

@@ -38,7 +38,7 @@ const getNextTitle = (level) => {
   return null;
 };
 
-const EXP_PER_LEVEL = 500;
+const EXP_PER_LEVEL = 7000;
 
 // ============================================================
 // 工具
@@ -80,17 +80,25 @@ const computeStats = (profile) => {
     }
 
     let cs = 0;
-    const back = new Date(today);
-    while (true) {
-      const k = dateKey(back);
-      if (records[k] && records[k] > 0) {
-        cs += 1;
-        back.setDate(back.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-    currentStreak = cs;
+const todayKey2 = dateKey(today);
+const hasToday2 = records[todayKey2] && records[todayKey2] > 0;
+
+const back = new Date(today);
+if (!hasToday2) {
+  // 今天没专注 → 从昨天开始数
+  back.setDate(back.getDate() - 1);
+}
+
+while (true) {
+  const k = dateKey(back);
+  if (records[k] && records[k] > 0) {
+    cs += 1;
+    back.setDate(back.getDate() - 1);
+  } else {
+    break;
+  }
+}
+currentStreak = cs;
   }
 
   const now = new Date();

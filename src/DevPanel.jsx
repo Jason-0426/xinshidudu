@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './index.css';
 import { BUILDINGS } from './buildings';
 
-const EXP_PER_LEVEL = 500;
+const EXP_PER_LEVEL = 7000;
 
 export default function DevPanel({
   open,
