@@ -641,7 +641,7 @@ const [breakDuration, setBreakDuration] = useState(() => {
 });
   const audioRef = useRef(null);
 
-  const [gold, setGold] = useStat(100);
+  const [gold, setGold] = useState(100);
   const [selectedBuilding, setSelectedBuilding] = useState(() => {
   try {
     const savedId = localStorage.getItem('xinshidudu_selected_building');
