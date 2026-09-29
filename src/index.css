@@ -9483,8 +9483,8 @@ body {
 
 :root {
   /* 像素字体 */
-  --font-pixel: 'Press Start 2P', 'Silkscreen', monospace;
-  --font-silk: 'Silkscreen', monospace;
+  --font-pixel: 'Press Start 2P', 'Zpix', 'Silkscreen', monospace;
+  --font-silk: 'Zpix', 'Silkscreen', monospace;
   --font-modern: 'Plus Jakarta Sans', -apple-system, sans-serif;
 
   /* 色彩 */
@@ -9501,7 +9501,7 @@ body {
   background-image:
     radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 24px 24px !important;
-  font-family: var(--font-modern) !important;
+  font-family: 'Plus Jakarta Sans', 'Zpix', -apple-system, sans-serif !important;
 }
 
 /* 弥散光斑 */
@@ -9690,6 +9690,24 @@ button:active,
 @keyframes floatSlowCenter {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
+}
+/* ============================================================
+   中文字体：Zpix 像素
+   ============================================================ */
+/* 所有中文（包括中文标点）走 Zpix */
+:lang(zh),
+:lang(zh-CN),
+:lang(zh-TW),
+:lang(zh-HK) {
+  font-family: 'Zpix', var(--font-modern) !important;
+}
+
+/* 或者直接给 body 加（更暴力） */
+body,
+button,
+input,
+textarea {
+  font-family: 'Plus Jakarta Sans', 'Zpix', -apple-system, sans-serif !important;
 }
 /* ============================================================
    END
