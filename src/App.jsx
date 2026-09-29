@@ -1362,8 +1362,34 @@ setAudioOn(false);
   };
 
   // ---------- 共用：城堡舞台 ----------
-  const CastleStage = ({ onClick }) => (
-    <div className="castle-stage" onClick={onClick}>
+const CastleStage = ({ onClick }) => {
+  const stageRef = useRef(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    if (!stageRef.current) return;
+    const rect = stageRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / rect.width;
+    const dy = (e.clientY - cy) / rect.height;
+    setTilt({ x: dy * -8, y: dx * 8 });   // 最大倾斜 8 度
+  };
+
+  const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
+
+  return (
+    <div
+      ref={stageRef}
+      className="castle-stage"
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+        transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      }}
+    >
       <img
         src={selectedBuilding.imgs[0]}
         alt={selectedBuilding.name}
@@ -1372,6 +1398,7 @@ setAudioOn(false);
       <div className="castle-hint">点击更换建筑</div>
     </div>
   );
+};
 
   // ---------- 共用：控制面板 ----------
   const ControlPanel = () => (
