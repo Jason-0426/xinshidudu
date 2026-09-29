@@ -9483,9 +9483,11 @@ body {
 
 :root {
   /* 像素字体 */
-  --font-pixel: 'Press Start 2P', 'Zpix', 'Silkscreen', monospace;
-  --font-silk: 'Zpix', 'Silkscreen', monospace;
+  :root {
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-cn: 'ZCOOL QingKe HuangYou', 'Plus Jakarta Sans', sans-serif;
   --font-modern: 'Plus Jakarta Sans', -apple-system, sans-serif;
+}
 
   /* 色彩 */
   --bg-deep: #030508;
@@ -9708,6 +9710,124 @@ button,
 input,
 textarea {
   font-family: 'Plus Jakarta Sans', 'Zpix', -apple-system, sans-serif !important;
+}
+/* ============================================================
+   ⚠️ 字体系统 · 最终覆盖（放最后）
+   ============================================================ */
+
+/* ---------- 字体变量 ---------- */
+:root {
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-cn: 'ZCOOL QingKe HuangYou', 'Plus Jakarta Sans', sans-serif;
+  --font-modern: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'Press Start 2P', monospace;
+}
+
+/* ---------- 全局：中文用 ZCOOL ---------- */
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-cn) !important;
+}
+
+/* ---------- 像素字体：英文数字 ---------- */
+.timer-digits,
+.stat-value,
+.result-coins,
+.level-tag,
+.streak-badge,
+.desktop-brand,
+.gold-card span,
+.app-loading-text,
+.sidebar-profile-sub,
+.player-sub {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ---------- 主按钮 ---------- */
+.start-btn,
+.btn-primary,
+.login-submit,
+.avatar-confirm-btn,
+.activity-all-done-btn,
+.custom-btn.confirm,
+.reward-btn.keep,
+.result-ok,
+.party-create-btn {
+  font-family: var(--font-cn) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+/* ---------- 模式 tab / 时间选项 ---------- */
+.mode-tab,
+.time-option,
+.settings-chip,
+.avatar-tab,
+.feedback-chip {
+  font-family: var(--font-cn) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ---------- 控制卡标签 ---------- */
+.control-label,
+.control-sublabel,
+.timer-status,
+.timer-reward,
+.player-name,
+.sidebar-item,
+.sidebar-group-label,
+.drawer-nav-item,
+.drawer-name,
+.drawer-role,
+.drawer-days,
+.stat-label,
+.chart-header,
+.tasks-section-title,
+.profile-section-title,
+.settings-group-title,
+.about-section-title {
+  font-family: var(--font-cn) !important;
+  letter-spacing: 0.03em !important;
+}
+
+/* ---------- 顶栏品牌名 ---------- */
+.desktop-brand,
+.player-name {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+/* ---------- 金币数字 ---------- */
+.gold-card span {
+  font-family: var(--font-pixel) !important;
+  font-size: 11px !important;
+}
+
+/* ---------- 计时器大数字 ---------- */
+.timer-digits {
+  font-family: var(--font-pixel) !important;
+  font-size: 40px !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.2 !important;
+}
+
+/* ---------- 统计数值 ---------- */
+.stat-value {
+  font-family: var(--font-pixel) !important;
+  font-size: 18px !important;
+}
+
+/* ---------- 结果弹窗金币 ---------- */
+.result-coins {
+  font-family: var(--font-pixel) !important;
+  font-size: 22px !important;
 }
 /* ============================================================
    END
